@@ -1,116 +1,90 @@
 package utils_test
 
 import (
+	"dall06/go-cleanapi/config"
 	"dall06/go-cleanapi/utils"
+	"fmt"
+	"os"
+	"strings"
 	"testing"
+
+	"go.uber.org/zap"
 )
 
 func TestLoggerDev(test *testing.T) {
-	l := utils.NewLogger("dev")
+	conf := config.NewConfig()
+	err := conf.SetConfig()
+	if err != nil {
+		test.Fatalf("failed to create config: %v", err)
+	}
+
+	l := utils.NewLogger()
 	if l == nil {
 		test.Fatalf("failed to load logger")
 	}
-	test.Run("it should log in warn", func(t *testing.T) {
-		err := l.Warn("test warn: ", "hi")
-		if err != nil {
-			t.Fatalf("failed to log warn: %s", err)
-		}
 
-		t.Log("log success ", "hi")
-	})
-
-	test.Run("it should log in info", func(t *testing.T) {
-		err := l.Info("test info: ", "hi")
-		if err != nil {
-			t.Fatalf("failed to log info: %s", err)
-		}
-
-		t.Log("log success ", "hi")
-	})
-
-	test.Run("it should log in error", func(t *testing.T) {
-		err := l.Error("test error: ", "hi")
-		if err != nil {
-			t.Fatalf("failed to log error: %s", err)
-		}
-
-		t.Log("log success ", "hi")
-	})
-}
-
-func TestLoggerProd(test *testing.T) {
-	l := utils.NewLogger("prod")
-	if l == nil {
-		test.Fatalf("failed to load logger")
+	err = l.Initialize()
+	if err != nil {
+		test.Fatalf("failed to initialize logger: %v", err)
 	}
+
 	test.Run("it should log in warn", func(t *testing.T) {
-		err := l.Warn("test warn: ", "hi")
+		// Create a temporary log file
+		msg := "test warning message"
+		l.Warn(msg)
+
+		filePath := fmt.Sprintf("../logs/%s_%s.log", config.Stage, zap.WarnLevel.String())
+		data, err := os.ReadFile(filePath)
 		if err != nil {
-			t.Fatalf("failed to log warn: %s", err)
+			t.Fatalf("error reading log file to check content: %v", err)
 		}
 
-		t.Log("log success ", "hi")
-	})
-
-	test.Run("it should log in info", func(t *testing.T) {
-		err := l.Info("test info: ", "hi")
-		if err != nil {
-			t.Fatalf("failed to log info: %s", err)
+		if !strings.Contains(string(data), msg) {
+			t.Errorf("log file doesn't contain expected message: %q", msg)
 		}
-
-		t.Log("log success ", "hi")
 	})
 
 	test.Run("it should log in error", func(t *testing.T) {
-		err := l.Error("test error: ", "hi")
+		// Create a temporary log file
+		msg := "test warning message"
+		l.Error(msg)
+
+		filePath := fmt.Sprintf("../logs/%s_%s.log", config.Stage, zap.WarnLevel.String())
+		data, err := os.ReadFile(filePath)
 		if err != nil {
-			t.Fatalf("failed to log error: %s", err)
+			t.Fatalf("error reading log file to check content: %v", err)
 		}
 
-		t.Log("log success  ", "hi")
-	})
-}
-
-func TestLoggerTest(test *testing.T) {
-	l := utils.NewLogger("test")
-	if l == nil {
-		test.Fatalf("failed to load logger")
-	}
-	test.Run("it should log in warn", func(t *testing.T) {
-		err := l.Warn("test warn: ", "hi")
-		if err != nil {
-			t.Fatalf("failed to log warn: %s", err)
+		if !strings.Contains(string(data), msg) {
+			t.Errorf("log file doesn't contain expected message: %q", msg)
 		}
-
-		t.Log("log success ", "hi")
 	})
 
 	test.Run("it should log in info", func(t *testing.T) {
-		err := l.Info("test info: ", "hi")
+		// Create a temporary log file
+		msg := "test warning message"
+		l.Info(msg)
+
+		filePath := fmt.Sprintf("../logs/%s_%s.log", config.Stage, zap.WarnLevel.String())
+		data, err := os.ReadFile(filePath)
 		if err != nil {
-			t.Fatalf("failed to log info: %s", err)
+			t.Fatalf("error reading log file to check content: %v", err)
 		}
 
-		t.Log("log success ", "hi")
+		if !strings.Contains(string(data), msg) {
+			t.Errorf("log file doesn't contain expected message: %q", msg)
+		}
 	})
 
-	test.Run("it should log in error", func(t *testing.T) {
-		err := l.Error("test error: ", "hi")
-		if err != nil {
-			t.Fatalf("failed to log error: %s", err)
+	test.Run("it should not log, wrong dir", func(t *testing.T) {
+		// Create a temporary log file
+		msg := "test warning message"
+		l.Warn(msg)
+
+		filePath := fmt.Sprintf("/logs/%s_%s.log", config.Stage, zap.WarnLevel.String())
+		_, err := os.ReadFile(filePath)
+		if err == nil {
+			t.Fatalf("i must have failed")
 		}
-
-		t.Log("log failed succesfully ", err)
-	})
-}
-
-func TestLog(test *testing.T) {
-	test.Run("it should return an empty logger error", func(t *testing.T) {
-		l := utils.NewLogger("non_exist")
-		if l != nil {
-			test.Fatalf("failed to fail")
-		}
-
-		test.Log("log failed succesfully: empty logger")
 	})
 }

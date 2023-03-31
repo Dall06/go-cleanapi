@@ -2,7 +2,7 @@ package routes
 
 import (
 	"dall06/go-cleanapi/config"
-	"dall06/go-cleanapi/pkg/internal/controller"
+	"dall06/go-cleanapi/pkg/api/controller"
 
 	"strings"
 
@@ -26,7 +26,7 @@ func NewRoutesV1(app fiber.App, c cache.Cache, ctrl controller.Controller) Route
 
 func (routes *Routes) Set() {
 	var sb strings.Builder
-	sb.WriteString(config.BasePath)
+	sb.WriteString(config.ProyectPath)
 	sb.WriteString("/user")
 
 	group := routes.app.Group(sb.String())
@@ -34,5 +34,5 @@ func (routes *Routes) Set() {
 	group.Get("/hello", func(c *fiber.Ctx) error {
 		return c.SendString("hello to user route path, human!")
 	})
-	group.Group("/user/:id", routes.controller.GetByID)
+	group.Group("/user/:id", routes.controller.Get)
 }

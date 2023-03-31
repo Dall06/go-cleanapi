@@ -1,11 +1,18 @@
 package utils_test
 
 import (
+	"dall06/go-cleanapi/config"
 	"dall06/go-cleanapi/utils"
 	"testing"
 )
 
 func TestJWTCreate(test *testing.T) {
+	conf := config.NewConfig()
+	err := conf.SetConfig()
+	if err != nil {
+		test.Fatalf("failed to create config: %v", err)
+	}
+	
 	jwt := utils.NewJWT()
 	if jwt == nil {
 		test.Fatalf("failed to create jwt repo")

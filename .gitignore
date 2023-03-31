@@ -1,3 +1,5 @@
-.env.*
-!.env.test
+.env
+
+!.example.env
+
 log/*/*.log

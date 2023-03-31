@@ -22,7 +22,7 @@ func NewDBConn() DBConn {
 }
 
 func (DBConn) Open() (sql.DB, error) {
-	db, err := sql.Open("mysql", config.DBDNS)
+	db, err := sql.Open("mysql", config.DBConnString)
 	if err != nil {
 		return *db, err
 	}

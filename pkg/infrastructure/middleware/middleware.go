@@ -1,5 +1,5 @@
 package middleware
-
+/*
 import (
 	"dall06/go-cleanapi/config"
 
@@ -107,3 +107,4 @@ func (Middleware) KeyAuth() fiber.Handler {
 	}
 	return keyauth.New(cfg)
 }
+*/

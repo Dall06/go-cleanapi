@@ -6,17 +6,27 @@ import (
 	"fmt"
 )
 
-type Repository struct {
+type Repository interface {
+	Create(user *internal.User) error
+	Read(user *internal.User) (*internal.User, error)
+	ReadAll() (internal.Users, error)
+	Update(user *internal.User) error
+	Delete(user *internal.User) error
+}
+
+var _ Repository = (*repository)(nil)
+
+type repository struct {
 	dbConn *sql.DB
 }
 
-func NewRepository(db *sql.DB) *Repository {
-	return &Repository{
+func NewRepository(db *sql.DB) Repository {
+	return &repository{
 		dbConn: db,
 	}
 }
 
-func (r *Repository) Create(user *internal.User) error {
+func (r *repository) Create(user *internal.User) error {
 	if user == nil {
 		return fmt.Errorf("user is empty")
 	}
@@ -40,7 +50,7 @@ func (r *Repository) Create(user *internal.User) error {
 		return fmt.Errorf("failed to execute SQL statement: %v", err)
 	}
 
-	lastId , err := res.LastInsertId()
+	lastId, err := res.LastInsertId()
 	if err != nil {
 		return fmt.Errorf("failed to obtain rows affected: %v", err)
 	}
@@ -52,7 +62,7 @@ func (r *Repository) Create(user *internal.User) error {
 	return nil
 }
 
-func (r Repository) Read(user *internal.User) (*internal.User, error) {
+func (r repository) Read(user *internal.User) (*internal.User, error) {
 	if user == nil {
 		return nil, fmt.Errorf("user is empty")
 	}
@@ -67,7 +77,8 @@ func (r Repository) Read(user *internal.User) (*internal.User, error) {
 		&u.Email,
 		&u.Phone)
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("user not found")
+		// double nil because i consider that no rows found is more as a goo request but with an empty result
+		return nil, sql.ErrNoRows
 	}
 	if err != nil {
 		return nil, err
@@ -76,7 +87,7 @@ func (r Repository) Read(user *internal.User) (*internal.User, error) {
 	return u, nil
 }
 
-func (r *Repository) ReadAll() (internal.Users, error) {
+func (r *repository) ReadAll() (internal.Users, error) {
 	rows, err := r.dbConn.Query(spReadAll)
 	if err != nil {
 		return nil, err
@@ -106,7 +117,7 @@ func (r *Repository) ReadAll() (internal.Users, error) {
 	return users, nil
 }
 
-func (r Repository) Update(user *internal.User) error {
+func (r repository) Update(user *internal.User) error {
 	if user == nil {
 		return fmt.Errorf("user is empty")
 	}
@@ -141,7 +152,7 @@ func (r Repository) Update(user *internal.User) error {
 	return nil
 }
 
-func (r Repository) Delete(user *internal.User) error {
+func (r repository) Delete(user *internal.User) error {
 	if user == nil {
 		return fmt.Errorf("user is empty")
 	}

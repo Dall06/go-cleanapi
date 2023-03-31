@@ -1,5 +1,5 @@
 package server
-
+/*
 import (
 	"dall06/go-cleanapi/pkg/infrastructure/database"
 	"dall06/go-cleanapi/pkg/infrastructure/middleware"
@@ -89,3 +89,4 @@ func (s Server) Start() {
 	fmt.Println("Running cleanup tasks...")
 	// Your cleanup tasks go here
 }
+*/

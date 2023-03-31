@@ -7,8 +7,8 @@ import (
 )
 
 func TestDatabase(test *testing.T) {
-	env := config.NewEnv("dev")
-	err := env.LoadStrings()
+	conf := config.NewConfig()
+	err := conf.SetConfig()
 	if err != nil {
 		test.Fatalf("failed to load: %s", err)
 	}

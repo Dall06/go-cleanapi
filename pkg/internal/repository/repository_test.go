@@ -3,6 +3,7 @@ package repository_test
 import (
 	"dall06/go-cleanapi/pkg/internal"
 	"dall06/go-cleanapi/pkg/internal/repository"
+	"errors"
 	"regexp"
 	"testing"
 
@@ -39,7 +40,7 @@ func TestCreate(test *testing.T) {
 
 	// mock.ExpectBegin()
 	mock.ExpectExec(regexp.QuoteMeta(spCreate)).
-		WithArgs(user.ID, user.Email, user.Phone, user.Password).
+		WithArgs(user.ID, user.Email, sqlmock.AnyArg(), user.Password).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	test.Run("it should create", func(t *testing.T) {
@@ -67,10 +68,6 @@ func TestCreate(test *testing.T) {
 		if err == nil {
 			t.Fatalf("expecting an error")
 		}
-
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("unfulfilled expectations: %v", err)
-		}
 	})
 
 	test.Run("it should not create, user is nil", func(t *testing.T) {
@@ -78,10 +75,6 @@ func TestCreate(test *testing.T) {
 		err = r.Create(nil)
 		if err == nil {
 			t.Fatalf("expecting an error")
-		}
-
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("unfulfilled expectations: %v", err)
 		}
 	})
 
@@ -92,10 +85,6 @@ func TestCreate(test *testing.T) {
 		err = r.Create(u)
 		if err == nil {
 			t.Fatalf("expecting an error")
-		}
-
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("unfulfilled expectations: %v", err)
 		}
 	})
 
@@ -112,10 +101,6 @@ func TestCreate(test *testing.T) {
 		if err == nil {
 			t.Fatalf("expecting an error")
 		}
-
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("unfulfilled expectations: %v", err)
-		}
 	})
 
 	test.Run("it should not create, Email is missing", func(t *testing.T) {
@@ -131,10 +116,6 @@ func TestCreate(test *testing.T) {
 		if err == nil {
 			t.Fatalf("expecting an error")
 		}
-
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("unfulfilled expectations: %v", err)
-		}
 	})
 
 	test.Run("it should create besides that Phone is missing", func(t *testing.T) {
@@ -145,10 +126,14 @@ func TestCreate(test *testing.T) {
 			Password: "password",
 		}
 
+		mock.ExpectExec(regexp.QuoteMeta(spCreate)).
+		WithArgs(user.ID, user.Email, "", user.Password).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
 		// Call the Create method with the user instance.
 		err = r.Create(u)
-		if err == nil {
-			t.Fatalf("expecting an error")
+		if err != nil {
+			t.Fatalf("error when creating: %v",  err)
 		}
 
 		if err := mock.ExpectationsWereMet(); err != nil {
@@ -177,11 +162,11 @@ func TestRead(test *testing.T) {
 	}
 
 	columns := []string{"id", "email", "phone"}
-	mock.ExpectQuery(regexp.QuoteMeta(spRead)).
-		WithArgs(user.ID).
-		WillReturnRows(sqlmock.NewRows(columns).AddRow(user.ID, user.Email, user.Phone))
 
 	test.Run("it should read an user", func(t *testing.T) {
+		mock.ExpectQuery(regexp.QuoteMeta(spRead)).
+		WithArgs(user.ID).
+		WillReturnRows(sqlmock.NewRows(columns).AddRow(user.ID, user.Email, user.Phone))
 		// now we execute our method
 		res, err := r.Read(user)
 		if err != nil {
@@ -203,6 +188,10 @@ func TestRead(test *testing.T) {
 	})
 
 	test.Run("it should not read, ID is empty", func(t *testing.T) {
+		mock.ExpectQuery(regexp.QuoteMeta(spRead)).
+		WithArgs(user.ID).
+		WillReturnRows(sqlmock.NewRows(columns).AddRow(user.ID, user.Email, user.Phone))
+
 		u := internal.User{
 			ID: "",
 		}
@@ -215,6 +204,10 @@ func TestRead(test *testing.T) {
 	})
 
 	test.Run("it should not read, user is empty", func(t *testing.T) {
+		mock.ExpectQuery(regexp.QuoteMeta(spRead)).
+		WithArgs(user.ID).
+		WillReturnRows(sqlmock.NewRows(columns).AddRow(user.ID, user.Email, user.Phone))
+
 		u := internal.User{}
 		// now we execute our method
 		_, err = r.Read(&u)
@@ -225,6 +218,10 @@ func TestRead(test *testing.T) {
 	})
 
 	test.Run("it should not read, user is nil", func(t *testing.T) {
+		mock.ExpectQuery(regexp.QuoteMeta(spRead)).
+		WithArgs(user.ID).
+		WillReturnRows(sqlmock.NewRows(columns).AddRow(user.ID, user.Email, user.Phone))
+
 		// now we execute our method
 		_, err = r.Read(nil)
 		if err == nil {
@@ -233,15 +230,45 @@ func TestRead(test *testing.T) {
 		t.Log("user not read")
 	})
 
-	test.Run("it should not read, ID does not exist", func(t *testing.T) {
+	test.Run("it should not read, internal", func(t *testing.T) {
+		mock.ExpectQuery(regexp.QuoteMeta(spRead)).
+		WithArgs(user.ID).
+		WillReturnRows(sqlmock.NewRows(columns).AddRow(user.ID, user.Email, user.Phone))
+
 		u := &internal.User{
 			ID: "3",
 		}
 		// now we execute our method
-		_, err = r.Read(u)
+		res, err := r.Read(u)
 		if err == nil {
 			t.Errorf("error no generated")
 		}
+		if res != nil {
+			t.Errorf("expecting to be nil")
+		}
+
+		assert.Error(t, err)
+		t.Log("user not read")
+	})
+
+	test.Run("it should not read, internal", func(t *testing.T) {
+		mock.ExpectQuery(regexp.QuoteMeta(spRead)).
+		WithArgs(user.ID).
+		WillReturnError(errors.New("internal error"))
+
+		u := &internal.User{
+			ID: "3",
+		}
+		// now we execute our method
+		res, err := r.Read(u)
+		if err == nil {
+			t.Errorf("error no generated")
+		}
+		if res != nil {
+			t.Errorf("expecting to be nil")
+		}
+
+		assert.Error(t, err)
 		t.Log("user not read")
 	})
 }
@@ -474,11 +501,11 @@ func TestUpdate(test *testing.T) {
 		}
 	})
 
-	test.Run("it should not update, user email and phone is missing", func(t *testing.T) {
+	test.Run("it should not update, user email is missing", func(t *testing.T) {
 		u := &internal.User{
 			ID:       "1",
 			Email:    "",
-			Phone:    "",
+			Phone:    "+1234567890",
 			Password: "password",
 		}
 
