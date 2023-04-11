@@ -47,7 +47,7 @@ func NewServer(
 
 func (s server) Start() error {
 	// init database
-	dbConn := database.NewDBConn()
+	dbConn := database.NewDBConn(s.logger)
 	conn, err := dbConn.Open()
 	if err != nil {
 		s.logger.Error("Failed to open database connection", err)

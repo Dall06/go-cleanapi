@@ -59,15 +59,15 @@ func (l *logger) Initialize() error {
 }
 
 func (l *logger) Warn(message string, args ...interface{}) {
-	l.loggers[zapcore.WarnLevel].Warnw(message, args...)
+	l.loggers[zapcore.WarnLevel].Warnf(message, args...)
 }
 
 func (l *logger) Info(message string, args ...interface{}) {
-	l.loggers[zapcore.InfoLevel].Infow(message, args...)
+	l.loggers[zapcore.InfoLevel].Infof(message, args...)
 }
 
 func (l *logger) Error(message string, args ...interface{}) {
-	l.loggers[zapcore.ErrorLevel].Errorw(message, args...)
+	l.loggers[zapcore.ErrorLevel].Errorf(message, args...)
 }
 
 func getLogFilePath(stage string, level string) (string, error) {

@@ -5,7 +5,6 @@ import (
 	"dall06/go-cleanapi/utils"
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -68,7 +67,7 @@ func (c *controller) Post(ctx *fiber.Ctx) error {
 	req := &PostRequest{}
 
 	if err := ctx.BodyParser(&req); err != nil {
-		c.logger.Error("%s -> [%s, %s] %s: (%s)", ctx.Method(), time.Now(), internalError, err)
+		c.logger.Error("%s -> %s: %s", ctx.Method(), internalError, err)
 		return fiber.NewError(statusInternalServerError, fmt.Sprintf("%s: %s", internalError, err))
 	}
 
@@ -86,11 +85,11 @@ func (c *controller) Post(ctx *fiber.Ctx) error {
 	err := c.usecases.RegisterUser(userInput)
 	if err != nil {
 		// Return an error response if the use case returns an error
-		c.logger.Error("%s -> [%s, %s] %s: (%s)", ctx.Method(), time.Now(), internalError, err)
+		c.logger.Error("%s -> %s: %s", ctx.Method(), internalError, err)
 		return fiber.NewError(statusInternalServerError, fmt.Sprintf("%s: %s", internalError, err))
 	}
 
-	c.logger.Info("%s -> [%s, %s] %s: (%s)", ctx.Method(), time.Now(), processed, ctx.BaseURL())
+	c.logger.Info("%s -> %s: %s", ctx.Method(), processed, ctx.BaseURL())
 	return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{"msg": registered})
 }
 
@@ -108,7 +107,7 @@ func (c *controller) Get(ctx *fiber.Ctx) error {
 	userData, err := c.usecases.IndexByID(userInput)
 	if err != nil {
 		// Return an error response if the use case returns an error
-		c.logger.Error("%s -> [%s, %s] %s: (%s)", ctx.Method(), time.Now(), internalError, err)
+		c.logger.Error("%s -> %s: %s", ctx.Method(), internalError, err)
 		return fiber.NewError(statusInternalServerError, fmt.Sprintf("%s: %s", internalError, err))
 	}
 	if userData == nil {
@@ -121,20 +120,20 @@ func (c *controller) Get(ctx *fiber.Ctx) error {
 	err = mapstructure.Decode(userData, &userOutput)
 	if err != nil {
 		// Return an error response if the user data cannot be converted
-		c.logger.Error("%s -> [%s, %s] %s: (%s)", ctx.Method(), time.Now(), internalError, err)
+		c.logger.Error("%s -> %s: %s", ctx.Method(), internalError, err)
 		return fiber.NewError(statusInternalServerError, fmt.Sprintf("%s: %s", internalError, err))
 	}
 	if err == sql.ErrNoRows {
-		c.logger.Error("%s -> [%s, %s] %s: (%s)", ctx.Method(), time.Now(), notFound, userIsNil)
+		c.logger.Error("%s -> %s: %s", ctx.Method(), notFound, userIsNil)
 		return fiber.NewError(statusNotFound, fmt.Sprintf("%s: %s", notFound, err))
 	}
 	if userOutput == nil {
-		c.logger.Error("%s -> [%s, %s] %s: (%s)", ctx.Method(), time.Now(), notFound, userIsNil)
+		c.logger.Error("%s -> %s: %s", ctx.Method(), notFound, userIsNil)
 		return fiber.NewError(statusNotFound, fmt.Sprintf("%s: %s", notFound, err))
 	}
 
 	// Return a success response with the user data
-	c.logger.Info("%s -> [%s, %s] %s: (%s)", ctx.Method(), time.Now(), processed, ctx.BaseURL())
+	c.logger.Info("%s -> %s: %s", ctx.Method(), processed, ctx.BaseURL())
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"data": userOutput})
 }
 
@@ -149,7 +148,7 @@ func (c *controller) GetAll(ctx *fiber.Ctx) error {
 	users, err := c.usecases.IndexAll()
 	if err != nil {
 		// Return an error response if the use case returns an error
-		c.logger.Error("%s -> [%s, %s] %s: (%s)", ctx.Method(), time.Now(), internalError, err)
+		c.logger.Error("%s -> %s: %s", ctx.Method(), internalError, err)
 		return fiber.NewError(statusInternalServerError, fmt.Sprintf("%s: %s", internalError, err))
 	}
 	if users == nil {
@@ -162,7 +161,7 @@ func (c *controller) GetAll(ctx *fiber.Ctx) error {
 	err = mapstructure.Decode(users, &usersOutput)
 	if err != nil {
 		// Return an error response if the user data cannot be converted
-		c.logger.Error("%s -> [%s, %s] %s: (%s)", ctx.Method(), time.Now(), internalError, err)
+		c.logger.Error("%s -> %s: %s", ctx.Method(), internalError, err)
 		return fiber.NewError(statusInternalServerError, fmt.Sprintf("%s: %s", internalError, err))
 	}
 	if usersOutput == nil {
@@ -174,7 +173,7 @@ func (c *controller) GetAll(ctx *fiber.Ctx) error {
 	c.cache.Set("users", usersOutput, cache.DefaultExpiration)
 
 	// Return a success response with the user data
-	c.logger.Info("%s -> [%s, %s] %s: (%s)", ctx.Method(), time.Now(), processed, ctx.BaseURL())
+	c.logger.Info("%s -> %s: %s", ctx.Method(), processed, ctx.BaseURL())
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"data": usersOutput})
 }
 
@@ -206,11 +205,11 @@ func (c *controller) Put(ctx *fiber.Ctx) error {
 	err := c.usecases.ModifyUser(userInput)
 	if err != nil {
 		// Return an error response if the use case returns an error
-		c.logger.Error("%s -> [%s, %s] %s: (%s)", ctx.Method(), time.Now(), internalError, err)
+		c.logger.Error("%s -> %s: %s", ctx.Method(), internalError, err)
 		return fiber.NewError(statusInternalServerError, fmt.Sprintf("%s: %s", internalError, err))
 	}
 
-	c.logger.Info("%s -> [%s, %s] %s: (%s)", ctx.Method(), time.Now(), processed, ctx.BaseURL())
+	c.logger.Info("%s -> %s: %s", ctx.Method(), processed, ctx.BaseURL())
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"msg": modified})
 }
 
@@ -224,7 +223,7 @@ func (c *controller) Delete(ctx *fiber.Ctx) error {
 
 	req := &DeleteRequest{}
 	if err := ctx.BodyParser(req); err != nil {
-		c.logger.Error("%s -> [%s, %s] %s: (%s)", ctx.Method(), time.Now(), internalError, err)
+		c.logger.Error("%s -> %s: %s", ctx.Method(), internalError, err)
 		return fiber.NewError(statusInternalServerError, fmt.Sprintf("%s: %s", internalError, err))
 	}
 	if err := c.validate.Struct(req); err != nil {
@@ -239,10 +238,10 @@ func (c *controller) Delete(ctx *fiber.Ctx) error {
 
 	err := c.usecases.DestroyUser(userInput)
 	if err != nil {
-		c.logger.Error("%s -> [%s, %s] %s: (%s)", ctx.Method(), time.Now(), internalError, err)
+		c.logger.Error("%s -> %s: %s", ctx.Method(), internalError, err)
 		return fiber.NewError(statusInternalServerError, fmt.Sprintf("%s: %s", internalError, err))
 	}
 
-	c.logger.Info("%s -> [%s, %s] %s: (%s)", ctx.Method(), time.Now(), processed, ctx.BaseURL())
+	c.logger.Info("%s -> %s: %s", ctx.Method(), processed, ctx.BaseURL())
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"msg": deleted})
 }

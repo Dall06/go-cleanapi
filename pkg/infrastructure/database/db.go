@@ -2,6 +2,7 @@ package database
 
 import (
 	"dall06/go-cleanapi/config"
+	"dall06/go-cleanapi/utils"
 	"database/sql"
 	"errors"
 	"time"
@@ -25,19 +26,25 @@ const (
 
 var _ DBRepository = (*DBConn)(nil)
 
-type DBConn struct{}
-
-func NewDBConn() DBRepository {
-	return DBConn{}
+type DBConn struct{
+	logger utils.Logger
 }
 
-func (DBConn) Open() (*sql.DB, error) {
+func NewDBConn(l utils.Logger) DBRepository {
+	return DBConn{
+		logger: l,
+	}
+}
+
+func (c DBConn) Open() (*sql.DB, error) {
 	if config.DBConnString == "" {
+		c.logger.Warn("db connection failed: %v", emptyConnectionString)
 		return nil, errors.New(emptyConnectionString)
 	}
 
 	db, err := sql.Open(dbEngine, config.DBConnString)
 	if err != nil {
+		c.logger.Error("db connection failed: %v", err)
 		return nil, err
 	}
 
@@ -45,18 +52,22 @@ func (DBConn) Open() (*sql.DB, error) {
 	db.SetMaxOpenConns(maxOpenConns)
 	db.SetMaxIdleConns(idleConns)
 
+	c.logger.Info("db connection opened")
 	return db, nil
 }
 
-func (DBConn) Close(db *sql.DB) error {
+func (c DBConn) Close(db *sql.DB) error {
 	if db == nil {
+		c.logger.Warn("db connection close failed: %s", emptyConnectionString)
 		return errors.New(emptyDBConn)
 	}
 
 	err := db.Close()
 	if err != nil {
+		c.logger.Error("db connection close failed: %v", err)
 		return err
 	}
 
+	c.logger.Info("db connection closed")
 	return nil
 }

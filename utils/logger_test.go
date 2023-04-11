@@ -48,6 +48,7 @@ func TestLoggerDev(test *testing.T) {
 		// Create a temporary log file
 		msg := "test warning message"
 		l.Error(msg)
+		l.Error("GET %s:%s", "internalError", "err")
 
 		filePath := fmt.Sprintf("../logs/%s_%s.log", config.Stage, zap.WarnLevel.String())
 		data, err := os.ReadFile(filePath)

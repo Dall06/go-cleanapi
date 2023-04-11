@@ -225,3 +225,29 @@
 {"severity":"info","ts":"2023-04-10T16:26:54.004-0600","caller":"utils/logger.go:66","message":"%s -> [%s, %s] %s: (%s)","PUT":"2023-04-10T16:26:54.004-0600","request processed":"http://example.com"}
 {"severity":"info","ts":"2023-04-10T16:26:54.009-0600","caller":"utils/logger.go:66","message":"%s -> [%s, %s] %s: (%s)","DELETE":"2023-04-10T16:26:54.009-0600","request processed":"http://example.com"}
 {"severity":"info","ts":"2023-04-10T16:26:54.224-0600","caller":"utils/logger.go:66","message":"test warning message"}
+{"severity":"info","ts":"2023-04-11T14:16:23.521-0600","caller":"utils/logger.go:66","message":"test warning message"}
+{"severity":"info","ts":"2023-04-11T14:17:28.123-0600","caller":"utils/logger.go:66","message":"test warning message"}
+{"severity":"info","ts":"2023-04-11T14:18:47.724-0600","caller":"utils/logger.go:66","message":"test warning message"}
+{"severity":"info","ts":"2023-04-11T14:19:29.656-0600","caller":"utils/logger.go:66","message":"test warning message"}
+{"severity":"info","ts":"2023-04-11T14:20:07.069-0600","caller":"utils/logger.go:66","message":"test warning message"}
+{"severity":"info","ts":"2023-04-11T14:20:47.150-0600","caller":"utils/logger.go:66","message":"test warning message"}
+{"severity":"info","ts":"2023-04-11T14:21:25.777-0600","caller":"utils/logger.go:66","message":"test warning message"}
+{"severity":"info","ts":"2023-04-11T14:24:55.608-0600","caller":"utils/logger.go:66","message":"test warning message"}
+{"severity":"info","ts":"2023-04-11T14:25:06.974-0600","caller":"utils/logger.go:66","message":"test warning message"}
+{"severity":"info","ts":"2023-04-11T14:25:32.176-0600","caller":"utils/logger.go:66","message":"test warning message"}
+{"severity":"info","ts":"2023-04-11T14:28:20.298-0600","caller":"utils/logger.go:66","message":"test warning message"}
+{"severity":"info","ts":"2023-04-11T14:29:01.759-0600","caller":"utils/logger.go:66","message":"test warning message"}
+{"severity":"info","ts":"2023-04-11T14:29:35.515-0600","caller":"utils/logger.go:66","message":"test warning message"}
+{"severity":"info","ts":"2023-04-11T14:30:21.751-0600","caller":"utils/logger.go:66","message":"test warning message"}
+{"severity":"info","ts":"2023-04-11T14:30:30.850-0600","caller":"utils/logger.go:66","message":"POST -> request processed: http://example.com"}
+{"severity":"info","ts":"2023-04-11T14:30:30.856-0600","caller":"utils/logger.go:66","message":"GET -> request processed: http://example.com"}
+{"severity":"info","ts":"2023-04-11T14:30:30.862-0600","caller":"utils/logger.go:66","message":"GET -> request processed: http://example.com"}
+{"severity":"info","ts":"2023-04-11T14:30:30.862-0600","caller":"utils/logger.go:66","message":"GET -> request processed: http://example.com"}
+{"severity":"info","ts":"2023-04-11T14:30:30.868-0600","caller":"utils/logger.go:66","message":"PUT -> request processed: http://example.com"}
+{"severity":"info","ts":"2023-04-11T14:30:30.875-0600","caller":"utils/logger.go:66","message":"DELETE -> request processed: http://example.com"}
+{"severity":"info","ts":"2023-04-11T14:30:31.874-0600","caller":"utils/logger.go:66","message":"POST -> request processed: http://example.com"}
+{"severity":"info","ts":"2023-04-11T14:30:31.880-0600","caller":"utils/logger.go:66","message":"GET -> request processed: http://example.com"}
+{"severity":"info","ts":"2023-04-11T14:30:31.886-0600","caller":"utils/logger.go:66","message":"GET -> request processed: http://example.com"}
+{"severity":"info","ts":"2023-04-11T14:30:31.886-0600","caller":"utils/logger.go:66","message":"GET -> request processed: http://example.com"}
+{"severity":"info","ts":"2023-04-11T14:30:31.891-0600","caller":"utils/logger.go:66","message":"PUT -> request processed: http://example.com"}
+{"severity":"info","ts":"2023-04-11T14:30:31.897-0600","caller":"utils/logger.go:66","message":"DELETE -> request processed: http://example.com"}
