@@ -18,7 +18,7 @@ type claims struct {
 
 type JWTRepository interface {
 	Create(uid string) (string, error)
-	Check(requestToken string) (*jwt.Token, error)
+	Check(requestToken string) (bool, error)
 }
 
 var _ JWTRepository = (*myJwt)(nil)
@@ -59,9 +59,9 @@ func (ju *myJwt) Create(id string) (string, error) {
 	return signedToken, nil
 }
 
-func (ju *myJwt) Check(requestToken string) (*jwt.Token, error) {
+func (ju *myJwt) Check(requestToken string) (bool, error) {
 	if requestToken == "" {
-		return nil, errors.New("token cannot be empty")
+		return false, errors.New("token cannot be empty")
 	}
 
 	userClaims := &claims{}
@@ -75,12 +75,13 @@ func (ju *myJwt) Check(requestToken string) (*jwt.Token, error) {
 		return ju.secret, nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse token: %w", err)
+		return false, fmt.Errorf("failed to parse token: %w", err)
 	}
 
 	if !token.Valid {
-		return nil, errors.New("invalid token")
+		return false, errors.New("invalid token")
 	}
 
-	return token, nil
+	return true, nil
 }
+

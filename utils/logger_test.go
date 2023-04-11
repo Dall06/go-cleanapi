@@ -12,7 +12,7 @@ import (
 )
 
 func TestLoggerDev(test *testing.T) {
-	conf := config.NewConfig()
+	conf := config.NewConfig("8080")
 	err := conf.SetConfig()
 	if err != nil {
 		test.Fatalf("failed to create config: %v", err)

@@ -11,35 +11,44 @@ import (
 )
 
 var (
+	ApiBasePath = ""
+	AppPort      = ""
+
 	DBConnString = ""
 	JwtSecret    = []byte("")
 	ProyectName  = ""
 	Stage        = ""
 	ProyectPath  = ""
+	CookieSecret = ""
 )
 
 const (
-    file = ".env"
+	file = ".env"
 
-    envUserDB     = "USER_DB"
-    envPasswordDB = "PASSWORD_DB"
-    envHostDB     = "HOST_DB"
-    envPortDB     = "PORT_DB"
-    envNameDB     = "NAME_DB"
-    envSecretJWT  = "SECRET_JWT"
-    envStage      = "STAGE"
+	envUserDB           = "USER_DB"
+	envPasswordDB       = "PASSWORD_DB"
+	envHostDB           = "HOST_DB"
+	envPortDB           = "PORT_DB"
+	envNameDB           = "NAME_DB"
+	envSecretJWT        = "SECRET_JWT"
+	envStage            = "STAGE"
+	envCookieEncryption = "COOKIE_ENCRYPTION"
 )
 
 type ConfigRepository interface {
 	SetConfig() error
 }
 
-type Config struct{}
+type Config struct{
+	port string
+}
 
 var _ ConfigRepository = (*Config)(nil)
 
-func NewConfig() ConfigRepository {
-	return &Config{}
+func NewConfig(p string) ConfigRepository {
+	return &Config{
+		port: p,
+	}
 }
 
 func (c *Config) SetConfig() error {
@@ -52,11 +61,15 @@ func (c *Config) SetConfig() error {
 	JwtSecret = []byte(fmt.Sprint(os.Getenv("SECRET_JWT")))
 	Stage = strings.ToLower(os.Getenv("STAGE"))
 
-	name, err := c.loadName()
+	proyectName, err := c.loadName()
 	if err != nil {
 		return err
 	}
-	ProyectName = name
+	ProyectName = proyectName
+	AppPort = c.port
+
+	CookieSecret = os.Getenv(envCookieEncryption)
+	ApiBasePath = fmt.Sprintf("/%s/api/", ProyectName)
 
 	return nil
 }
@@ -78,7 +91,6 @@ func (c *Config) loadEnv() error {
 	return nil
 }
 
-
 func (c *Config) getProjectPath() (string, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -86,9 +98,12 @@ func (c *Config) getProjectPath() (string, error) {
 	}
 
 	for dir := cwd; dir != string(filepath.Separator); dir = filepath.Dir(dir) {
-		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+		_, err := os.Stat(filepath.Join(dir, "go.mod"))
+		if err == nil {
 			return dir, nil
-		} else if !os.IsNotExist(err) {
+		}
+
+		if !os.IsNotExist(err) {
 			return "", fmt.Errorf("failed to check directory: %w", err)
 		}
 	}

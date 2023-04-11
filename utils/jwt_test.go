@@ -7,7 +7,7 @@ import (
 )
 
 func TestJWTCreate(test *testing.T) {
-	conf := config.NewConfig()
+	conf := config.NewConfig("8080")
 	err := conf.SetConfig()
 	if err != nil {
 		test.Fatalf("failed to create config: %v", err)
@@ -49,18 +49,39 @@ func TestJWTCheckToken(test *testing.T) {
 
 		t.Log("created: ", token)
 
-		checkToken, err := jwt.Check(token)
+		ok, err := jwt.Check(token)
 		if err != nil {
 			t.Fatalf("failed to Check: %s", err)
 		}
 
-		t.Log("check ok: ", checkToken)
+		if !ok {
+			t.Fatalf("expected to get true, invalid token")
+		}
+
+		t.Log("check ok: ", ok)
 	})
 
-	test.Run("it should fail token check", func(t *testing.T) {
-		_, err := jwt.Check("")
+	test.Run("it should fail token check, is empty", func(t *testing.T) {
+		ok, err := jwt.Check("")
 		if err == nil {
 			t.Fatalf("failed to fail")
+		}
+
+		if ok {
+			t.Fatalf("expected to get false")
+		}
+
+		t.Log("failed successfully", err)
+	})
+
+	test.Run("it should fail token check, is not correct formatted", func(t *testing.T) {
+		ok, err := jwt.Check("dawedawedawedawed")
+		if err == nil {
+			t.Fatalf("failed to fail")
+		}
+
+		if ok {
+			t.Fatalf("expected to get false")
 		}
 
 		t.Log("failed successfully", err)

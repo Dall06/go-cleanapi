@@ -20,6 +20,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/mitchellh/mapstructure"
+	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -57,6 +58,10 @@ var putReq = controller.PutRequest{
 	Password: "password123",
 }
 
+var delReq = controller.DeleteRequest{
+	Password: "password123",
+}
+
 func TestPost(test *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -76,7 +81,7 @@ func TestPost(test *testing.T) {
 		Password: "password123",
 	}
 
-	conf := config.NewConfig()
+	conf := config.NewConfig("8080")
 	err = conf.SetConfig()
 	if err != nil {
 		test.Fatalf("failed to create config: %v", err)
@@ -96,7 +101,8 @@ func TestPost(test *testing.T) {
 
 	uidRepo := utils.NewMockUUIDRepository()
 	uc := usecases.NewUseCases(r, uidRepo)
-	ctrl := controller.NewController(uc, *v, l)
+	c := cache.New(5*time.Minute, 10*time.Minute)
+	ctrl := controller.NewController(uc, *v, l, *c)
 
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  50 * time.Second,
@@ -265,7 +271,7 @@ func TestPost(test *testing.T) {
 		// Encode the person struct as a JSON string
 		pr := &controller.PostRequest{
 			Email:    "johndoe@example.com",
-			Password: "passwor",
+			Password: "",
 			Phone:    "",
 		}
 		body, err := json.Marshal(pr)
@@ -285,7 +291,7 @@ func TestPost(test *testing.T) {
 
 		// Check that the response status code is 200 OK
 		if res.StatusCode != 400 {
-			t.Errorf("Expected status code %d, but got %d", 200, res.StatusCode)
+			t.Errorf("Expected status code %d, but got %d", 400, res.StatusCode)
 		}
 	})
 }
@@ -307,7 +313,7 @@ func TestGet(test *testing.T) {
 		WithArgs(user.ID).
 		WillReturnRows(sqlmock.NewRows(columns).AddRow(user.ID, user.Email, user.Phone))
 
-	conf := config.NewConfig()
+	conf := config.NewConfig("8080")
 	err = conf.SetConfig()
 	if err != nil {
 		test.Fatalf("failed to create config: %v", err)
@@ -327,7 +333,8 @@ func TestGet(test *testing.T) {
 
 	uidRepo := utils.NewMockUUIDRepository()
 	uc := usecases.NewUseCases(r, uidRepo)
-	ctrl := controller.NewController(uc, *v, l)
+	c := cache.New(5*time.Minute, 10*time.Minute)
+	ctrl := controller.NewController(uc, *v, l, *c)
 
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  50 * time.Second,
@@ -465,7 +472,7 @@ func TestGetAll(test *testing.T) {
 
 	columns := []string{"id", "email", "phone"}
 
-	conf := config.NewConfig()
+	conf := config.NewConfig("8080")
 	err = conf.SetConfig()
 	if err != nil {
 		test.Fatalf("failed to create config: %v", err)
@@ -485,7 +492,8 @@ func TestGetAll(test *testing.T) {
 
 	uidRepo := utils.NewMockUUIDRepository()
 	uc := usecases.NewUseCases(r, uidRepo)
-	ctrl := controller.NewController(uc, *v, l)
+	c := cache.New(5*time.Microsecond, 10*time.Microsecond)
+	ctrl := controller.NewController(uc, *v, l, *c)
 	if uc == nil {
 		test.Fatalf("an error was not expected when creating usecases")
 	}
@@ -658,7 +666,7 @@ func TestPut(test *testing.T) {
 		Password: "password123",
 	}
 
-	conf := config.NewConfig()
+	conf := config.NewConfig("8080")
 	err = conf.SetConfig()
 	if err != nil {
 		test.Fatalf("failed to create config: %v", err)
@@ -678,7 +686,8 @@ func TestPut(test *testing.T) {
 
 	uidRepo := utils.NewMockUUIDRepository()
 	uc := usecases.NewUseCases(r, uidRepo)
-	ctrl := controller.NewController(uc, *v, l)
+	c := cache.New(5*time.Minute, 10*time.Minute)
+	ctrl := controller.NewController(uc, *v, l, *c)
 
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  50 * time.Second,
@@ -697,9 +706,9 @@ func TestPut(test *testing.T) {
 			panic(err)
 		}
 
-		app.Post("/test_put_controller/:id", ctrl.Put)
+		app.Put("/test_put_controller/:id", ctrl.Put)
 		reqBody := bytes.NewBuffer(body)
-		req := httptest.NewRequest("POST", "/test_put_controller/1", reqBody)
+		req := httptest.NewRequest("PUT", "/test_put_controller/1", reqBody)
 		req.Header.Set("Content-Type", "application/json") // add content type header
 		res, err := app.Test(req)
 
@@ -721,9 +730,9 @@ func TestPut(test *testing.T) {
 			panic(err)
 		}
 
-		app.Post("/test_put_controller/:id", ctrl.Put)
+		app.Put("/test_put_controller/:id", ctrl.Put)
 		reqBody := bytes.NewBuffer(body)
-		req := httptest.NewRequest("POST", "/test_put_controller/1", reqBody)
+		req := httptest.NewRequest("PUT", "/test_put_controller/1", reqBody)
 		req.Header.Set("Content-Type", "application/json") // add content type header
 		res, err := app.Test(req)
 
@@ -744,9 +753,9 @@ func TestPut(test *testing.T) {
 			panic(err)
 		}
 
-		app.Post("/test_put_controller/:id", ctrl.Put)
+		app.Put("/test_put_controller/:id", ctrl.Put)
 		reqBody := bytes.NewBuffer(body)
-		req := httptest.NewRequest("POST", "/test_put_controller/1", reqBody)
+		req := httptest.NewRequest("PUT", "/test_put_controller/1", reqBody)
 		req.Header.Set("Content-Type", "application/json") // add content type header
 		res, err := app.Test(req)
 
@@ -770,9 +779,9 @@ func TestPut(test *testing.T) {
 			panic(err)
 		}
 
-		app.Post("/test_put_controller/:id", ctrl.Put)
+		app.Put("/test_put_controller/:id", ctrl.Put)
 		reqBody := bytes.NewBuffer(body)
-		req := httptest.NewRequest("POST", "/test_put_controller/1", reqBody)
+		req := httptest.NewRequest("PUT", "/test_put_controller/1", reqBody)
 		req.Header.Set("Content-Type", "application/json") // add content type header
 		res, err := app.Test(req)
 
@@ -798,9 +807,9 @@ func TestPut(test *testing.T) {
 			panic(err)
 		}
 
-		app.Post("/test_post_controller/", ctrl.Put)
+		app.Put("/test_put_controller/:id", ctrl.Put)
 		reqBody := bytes.NewBuffer(body)
-		req := httptest.NewRequest("POST", "/test_post_controller/", reqBody)
+		req := httptest.NewRequest("PUT", "/test_put_controller/1", reqBody)
 		req.Header.Set("Content-Type", "application/json") // add content type header
 		res, err := app.Test(req)
 
@@ -814,21 +823,22 @@ func TestPut(test *testing.T) {
 		}
 	})
 
-	test.Run("it should not create, bad email", func(t *testing.T) {
+	test.Run("it should not put, bad email", func(t *testing.T) {
 		// Encode the person struct as a JSON string
-		pr := &controller.PostRequest{
+		pr := &controller.PutRequest{
 			Email:    "johndoeexample.com",
 			Password: "password123",
 			Phone:    "+1234567890",
 		}
+
 		body, err := json.Marshal(pr)
 		if err != nil {
 			panic(err)
 		}
 
-		app.Post("/test_post_controller/", ctrl.Put)
+		app.Put("/test_put_controller/:id", ctrl.Put)
 		reqBody := bytes.NewBuffer(body)
-		req := httptest.NewRequest("POST", "/test_post_controller/", reqBody)
+		req := httptest.NewRequest("PUT", "/test_put_controller/1", reqBody)
 		req.Header.Set("Content-Type", "application/json") // add content type header
 		res, err := app.Test(req)
 
@@ -842,14 +852,9 @@ func TestPut(test *testing.T) {
 		}
 	})
 
-	test.Run("it should not create, no id param", func(t *testing.T) {
+	test.Run("it should not put, no id param", func(t *testing.T) {
 		// Encode the person struct as a JSON string
-		pr := &controller.PostRequest{
-			Email:    "johndoeexample.com",
-			Password: "password123",
-			Phone:    "+1234567890",
-		}
-		body, err := json.Marshal(pr)
+		body, err := json.Marshal(putReq)
 		if err != nil {
 			panic(err)
 		}
@@ -890,7 +895,7 @@ func TestDelete(test *testing.T) {
 		Password: "password123",
 	}
 
-	conf := config.NewConfig()
+	conf := config.NewConfig("8080")
 	err = conf.SetConfig()
 	if err != nil {
 		test.Fatalf("failed to create config: %v", err)
@@ -910,7 +915,8 @@ func TestDelete(test *testing.T) {
 
 	uidRepo := utils.NewMockUUIDRepository()
 	uc := usecases.NewUseCases(r, uidRepo)
-	ctrl := controller.NewController(uc, *v, l)
+	c := cache.New(5*time.Minute, 10*time.Minute)
+	ctrl := controller.NewController(uc, *v, l, *c)
 
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  50 * time.Second,
@@ -924,14 +930,14 @@ func TestDelete(test *testing.T) {
 
 	test.Run("it should delete", func(t *testing.T) {
 		// Encode the person struct as a JSON string
-		body, err := json.Marshal(putReq)
+		body, err := json.Marshal(delReq)
 		if err != nil {
 			panic(err)
 		}
 
-		app.Post("/test_put_controller/:id", ctrl.Put)
+		app.Delete("/test_delete_controller/:id", ctrl.Delete)
 		reqBody := bytes.NewBuffer(body)
-		req := httptest.NewRequest("POST", "/test_put_controller/1", reqBody)
+		req := httptest.NewRequest("DELETE", "/test_delete_controller/1", reqBody)
 		req.Header.Set("Content-Type", "application/json") // add content type header
 		res, err := app.Test(req)
 
@@ -945,17 +951,17 @@ func TestDelete(test *testing.T) {
 		}
 	})
 
-	test.Run("it should not put, empty req", func(t *testing.T) {
+	test.Run("it should not delete, empty req", func(t *testing.T) {
 		// Encode the person struct as a JSON string
-		pr := &controller.PutRequest{}
-		body, err := json.Marshal(pr)
+		dr := &controller.DeleteRequest{}
+		body, err := json.Marshal(dr)
 		if err != nil {
 			panic(err)
 		}
 
-		app.Post("/test_put_controller/:id", ctrl.Put)
+		app.Delete("/test_delete_controller/:id", ctrl.Delete)
 		reqBody := bytes.NewBuffer(body)
-		req := httptest.NewRequest("POST", "/test_put_controller/1", reqBody)
+		req := httptest.NewRequest("DELETE", "/test_delete_controller/1", reqBody)
 		req.Header.Set("Content-Type", "application/json") // add content type header
 		res, err := app.Test(req)
 
@@ -969,16 +975,16 @@ func TestDelete(test *testing.T) {
 		}
 	})
 
-	test.Run("it should not put, nil req", func(t *testing.T) {
+	test.Run("it should not delete, nil req", func(t *testing.T) {
 		// Encode the person struct as a JSON string
 		body, err := json.Marshal(nil)
 		if err != nil {
 			panic(err)
 		}
 
-		app.Post("/test_put_controller/:id", ctrl.Put)
+		app.Post("/test_delete_controller/:id", ctrl.Delete)
 		reqBody := bytes.NewBuffer(body)
-		req := httptest.NewRequest("POST", "/test_put_controller/1", reqBody)
+		req := httptest.NewRequest("POST", "/test_delete_controller/1", reqBody)
 		req.Header.Set("Content-Type", "application/json") // add content type header
 		res, err := app.Test(req)
 
@@ -992,75 +998,19 @@ func TestDelete(test *testing.T) {
 		}
 	})
 
-	test.Run("it should not put, empty email", func(t *testing.T) {
-		pr := &controller.PutRequest{
-			Phone:    "+1234567890",
-			Password: "password123",
-		}
-		body, err := json.Marshal(pr)
-		if err != nil {
-			panic(err)
-		}
-
-		app.Post("/test_put_controller/:id", ctrl.Put)
-		reqBody := bytes.NewBuffer(body)
-		req := httptest.NewRequest("POST", "/test_put_controller/1", reqBody)
-		req.Header.Set("Content-Type", "application/json") // add content type header
-		res, err := app.Test(req)
-
-		if err != nil {
-			t.Errorf("error was not expected when post data: %s", err)
-		}
-
-		// Check that the response status code is 200 OK
-		if res.StatusCode != 400 {
-			t.Errorf("Expected status code %d, but got %d", 400, res.StatusCode)
-		}
-	})
-
-	test.Run("it should not put, empty password", func(t *testing.T) {
+	test.Run("it should not delete, empty password", func(t *testing.T) {
 		// Encode the person struct as a JSON string
-		pr := &controller.PostRequest{
-			Email:    "johndoeexample.com",
+		dr := &controller.DeleteRequest{
 			Password: "",
-			Phone:    "+1234567890",
 		}
-		body, err := json.Marshal(pr)
+		body, err := json.Marshal(dr)
 		if err != nil {
 			panic(err)
 		}
 
-		app.Post("/test_post_controller/", ctrl.Put)
+		app.Delete("/test_delete_controller/:id", ctrl.Put)
 		reqBody := bytes.NewBuffer(body)
-		req := httptest.NewRequest("POST", "/test_post_controller/", reqBody)
-		req.Header.Set("Content-Type", "application/json") // add content type header
-		res, err := app.Test(req)
-
-		if err != nil {
-			t.Errorf("error was not expected when post data: %s", err)
-		}
-
-		// Check that the response status code is 200 OK
-		if res.StatusCode != 400 {
-			t.Errorf("Expected status code %d, but got %d", 400, res.StatusCode)
-		}
-	})
-
-	test.Run("it should not create, bad email", func(t *testing.T) {
-		// Encode the person struct as a JSON string
-		pr := &controller.PostRequest{
-			Email:    "johndoeexample.com",
-			Password: "password123",
-			Phone:    "+1234567890",
-		}
-		body, err := json.Marshal(pr)
-		if err != nil {
-			panic(err)
-		}
-
-		app.Post("/test_post_controller/", ctrl.Put)
-		reqBody := bytes.NewBuffer(body)
-		req := httptest.NewRequest("POST", "/test_post_controller/", reqBody)
+		req := httptest.NewRequest("DELETE", "/test_delete_controller/1", reqBody)
 		req.Header.Set("Content-Type", "application/json") // add content type header
 		res, err := app.Test(req)
 

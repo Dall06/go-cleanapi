@@ -1,3 +1,7 @@
+// +build !coverage
+// this package should not be tested
+// it is just an implementation and integration fo methos that are goning to be tested on integration
+
 package routes
 
 import (
@@ -7,32 +11,40 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/patrickmn/go-cache"
 )
+
+type RoutesRepository interface {
+	Set()
+}
+
+var _ RoutesRepository = (*Routes)(nil)
 
 type Routes struct {
 	app        *fiber.App
-	theCache   *cache.Cache
 	controller controller.Controller
 }
 
-func NewRoutesV1(app fiber.App, c cache.Cache, ctrl controller.Controller) Routes {
+func NewRoutesV1(app fiber.App, ctrl controller.Controller) RoutesRepository {
 	return Routes{
 		app:      &app,
-		theCache: &c,
 		controller: ctrl,
 	}
 }
 
-func (routes *Routes) Set() {
+func (routes Routes) Set() {
 	var sb strings.Builder
-	sb.WriteString(config.ProyectPath)
+	sb.WriteString(config.ApiBasePath)
 	sb.WriteString("/user")
 
-	group := routes.app.Group(sb.String())
+	userPath := sb.String()
+	userGroup := routes.app.Group(userPath)
 
-	group.Get("/hello", func(c *fiber.Ctx) error {
+	userGroup.Get("/hello", func(c *fiber.Ctx) error {
 		return c.SendString("hello to user route path, human!")
 	})
-	group.Group("/user/:id", routes.controller.Get)
+	userGroup.Post("/", routes.controller.Post)
+	userGroup.Get("/:id", routes.controller.Get)
+	userGroup.Get("/all", routes.controller.GetAll)
+	userGroup.Put("/:id", routes.controller.Put)
+	userGroup.Delete("/:id", routes.controller.Delete)
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/mitchellh/mapstructure"
+	"github.com/patrickmn/go-cache"
 )
 
 const (
@@ -44,6 +45,7 @@ type controller struct {
 	usecases usecases.UseCases
 	validate validator.Validate
 	logger   utils.Logger
+	cache *cache.Cache
 }
 
 var _ Controller = (*controller)(nil)
@@ -52,11 +54,13 @@ func NewController(
 	uc usecases.UseCases,
 	v validator.Validate,
 	l utils.Logger,
+	c cache.Cache,
 ) Controller {
 	return &controller{
 		usecases: uc,
 		validate: v,
 		logger:   l,
+		cache: &c,
 	}
 }
 
@@ -135,6 +139,13 @@ func (c *controller) Get(ctx *fiber.Ctx) error {
 }
 
 func (c *controller) GetAll(ctx *fiber.Ctx) error {
+	// check if exists in cache, if yes returns value, if not, continues
+	cachedUsers, found := c.cache.Get("users"); 
+	if found {
+		usersOutput := cachedUsers.(*Users)
+		return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"data": usersOutput})
+	}
+
 	users, err := c.usecases.IndexAll()
 	if err != nil {
 		// Return an error response if the use case returns an error
@@ -147,21 +158,24 @@ func (c *controller) GetAll(ctx *fiber.Ctx) error {
 	}
 
 	// Convert the user data to the output format
-	userOutput := &Users{}
-	err = mapstructure.Decode(users, &userOutput)
+	usersOutput := &Users{}
+	err = mapstructure.Decode(users, &usersOutput)
 	if err != nil {
 		// Return an error response if the user data cannot be converted
 		c.logger.Error("%s -> [%s, %s] %s: (%s)", ctx.Method(), time.Now(), internalError, err)
 		return fiber.NewError(statusInternalServerError, fmt.Sprintf("%s: %s", internalError, err))
 	}
-	if userOutput == nil {
+	if usersOutput == nil {
 		c.logger.Error("%s: %s", notFound, usersAreNil)
 		return fiber.NewError(statusNotFound, fmt.Sprintf("%s: %s", notFound, usersAreNil))
 	}
 
+	// Set new cache
+	c.cache.Set("users", usersOutput, cache.DefaultExpiration)
+
 	// Return a success response with the user data
 	c.logger.Info("%s -> [%s, %s] %s: (%s)", ctx.Method(), time.Now(), processed, ctx.BaseURL())
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"data": userOutput})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"data": usersOutput})
 }
 
 func (c *controller) Put(ctx *fiber.Ctx) error {
