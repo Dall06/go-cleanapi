@@ -65,6 +65,7 @@ func TestLoggerDev(test *testing.T) {
 		// Create a temporary log file
 		msg := "test warning message"
 		l.Info(msg)
+		l.Info("GET %s:%s", "im a get", "accessed")
 
 		filePath := fmt.Sprintf("../logs/%s_%s.log", config.Stage, zap.WarnLevel.String())
 		data, err := os.ReadFile(filePath)
@@ -81,6 +82,7 @@ func TestLoggerDev(test *testing.T) {
 		// Create a temporary log file
 		msg := "test warning message"
 		l.Warn(msg)
+		l.Warn("GET %s:%s", "im a get", "something might be bad")
 
 		filePath := fmt.Sprintf("/logs/%s_%s.log", config.Stage, zap.WarnLevel.String())
 		_, err := os.ReadFile(filePath)

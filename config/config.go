@@ -1,6 +1,8 @@
 package config
 
 import (
+	"crypto/sha512"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"os/exec"
@@ -12,7 +14,9 @@ import (
 
 var (
 	ApiBasePath = ""
-	AppPort      = ""
+	ApiPort     = ""
+	ApiKey      = ""
+	ApiKeyHash  = ""
 
 	DBConnString = ""
 	JwtSecret    = []byte("")
@@ -33,13 +37,14 @@ const (
 	envSecretJWT        = "SECRET_JWT"
 	envStage            = "STAGE"
 	envCookieEncryption = "COOKIE_ENCRYPTION"
+	envApiKey           = "API_KEY"
 )
 
 type ConfigRepository interface {
 	SetConfig() error
 }
 
-type Config struct{
+type Config struct {
 	port string
 }
 
@@ -66,10 +71,15 @@ func (c *Config) SetConfig() error {
 		return err
 	}
 	ProyectName = proyectName
-	AppPort = c.port
+	ApiPort = c.port
 
 	CookieSecret = os.Getenv(envCookieEncryption)
-	ApiBasePath = fmt.Sprintf("/%s/api/", ProyectName)
+	ApiBasePath = fmt.Sprintf("/%s/api", ProyectName)
+
+	ak := os.Getenv(envApiKey)
+	ApiKey = ak
+	sha := sha512.Sum512_256([]byte(ak))
+	ApiKeyHash = hex.EncodeToString(sha[:])
 
 	return nil
 }

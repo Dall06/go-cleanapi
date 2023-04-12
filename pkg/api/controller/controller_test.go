@@ -98,11 +98,12 @@ func TestPost(test *testing.T) {
 	}
 
 	v := validator.New()
+	j := utils.NewMockJWTRepository()
 
 	uidRepo := utils.NewMockUUIDRepository()
 	uc := usecases.NewUseCases(r, uidRepo)
 	c := cache.New(5*time.Minute, 10*time.Minute)
-	ctrl := controller.NewController(uc, *v, l, *c)
+	ctrl := controller.NewController(uc, *v, l, j, *c)
 
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  50 * time.Second,
@@ -330,11 +331,12 @@ func TestGet(test *testing.T) {
 	}
 
 	v := validator.New()
+	j := utils.NewMockJWTRepository()
 
 	uidRepo := utils.NewMockUUIDRepository()
 	uc := usecases.NewUseCases(r, uidRepo)
 	c := cache.New(5*time.Minute, 10*time.Minute)
-	ctrl := controller.NewController(uc, *v, l, *c)
+	ctrl := controller.NewController(uc, *v, l, j, *c)
 
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  50 * time.Second,
@@ -489,11 +491,12 @@ func TestGetAll(test *testing.T) {
 	}
 
 	v := validator.New()
+	j := utils.NewMockJWTRepository()
 
 	uidRepo := utils.NewMockUUIDRepository()
 	uc := usecases.NewUseCases(r, uidRepo)
 	c := cache.New(5*time.Microsecond, 10*time.Microsecond)
-	ctrl := controller.NewController(uc, *v, l, *c)
+	ctrl := controller.NewController(uc, *v, l, j, *c)
 	if uc == nil {
 		test.Fatalf("an error was not expected when creating usecases")
 	}
@@ -683,11 +686,12 @@ func TestPut(test *testing.T) {
 	}
 
 	v := validator.New()
+	j := utils.NewMockJWTRepository()
 
 	uidRepo := utils.NewMockUUIDRepository()
 	uc := usecases.NewUseCases(r, uidRepo)
 	c := cache.New(5*time.Minute, 10*time.Minute)
-	ctrl := controller.NewController(uc, *v, l, *c)
+	ctrl := controller.NewController(uc, *v, l, j, *c)
 
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  50 * time.Second,
@@ -912,11 +916,12 @@ func TestDelete(test *testing.T) {
 	}
 
 	v := validator.New()
+	j := utils.NewMockJWTRepository()
 
 	uidRepo := utils.NewMockUUIDRepository()
 	uc := usecases.NewUseCases(r, uidRepo)
 	c := cache.New(5*time.Minute, 10*time.Minute)
-	ctrl := controller.NewController(uc, *v, l, *c)
+	ctrl := controller.NewController(uc, *v, l, j, *c)
 
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  50 * time.Second,

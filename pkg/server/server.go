@@ -19,6 +19,22 @@ import (
 	"github.com/patrickmn/go-cache"
 )
 
+// @title Fiber Swagger Example API
+// @version 2.0
+// @description This is a sample server server.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:3000
+// @BasePath /
+// @schemes http
+
 type Server interface {
 	Start() error
 }
@@ -61,7 +77,7 @@ func (s server) Start() error {
 	// user
 	repo := repository.NewRepository(conn)
 	usecases := usecases.NewUseCases(repo, s.uids)
-	ctrl := controller.NewController(usecases, s.validation, s.logger, *ctrlCache)
+	ctrl := controller.NewController(usecases, s.validation, s.logger, s.jwt, *ctrlCache)
 
 	// init server
 	cfg := fiber.Config{
@@ -73,10 +89,9 @@ func (s server) Start() error {
 	}
 
 	app := fiber.New(cfg)
-
 	// init middleware
 	mw := middleware.NewMiddleware(s.jwt)
-	//app.Use(middleware.CORS)
+	app.Use(mw.CORS())
 	app.Use(mw.Compress())
 	app.Use(mw.Helmet())
 	app.Use(mw.EncryptCookie())
@@ -87,14 +102,15 @@ func (s server) Start() error {
 	app.Use(mw.CRSF())
 
 	// generate routing
-	rtsV1 := routes.NewRoutesV1(*app, ctrl)
-	rtsV1.Set()
+	rtsV1 := routes.NewRoutes(app, ctrl)
+	rtsV1.SetV1()
 
 	// run gracefully
 	go func() {
-		if err := app.Listen(fmt.Sprintf(":%s", config.AppPort)); err != nil {
+		if err := app.Listen(fmt.Sprintf(":%s", config.ApiPort)); err != nil {
 			s.logger.Error("Failed to listen on port", err)
 		}
+		s.logger.Info("Running server...")
 	}()
 
 	// Gracefully shutdown

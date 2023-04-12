@@ -51,7 +51,6 @@ func (a app) Main() error {
 	if v == nil {
 		return errors.New("empty validator repo")
 	}
-	
 
 	s := server.NewServer(l, jwt, u, *v)
 	s.Start()

@@ -2,6 +2,8 @@ package utils
 
 import (
 	"dall06/go-cleanapi/config"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -16,17 +18,19 @@ type Logger interface {
 	Error(message string, args ...interface{})
 }
 
+var _ Logger = (*logger)(nil)
+
 type logger struct {
 	loggers map[zapcore.Level]*zap.SugaredLogger
 }
 
 func NewLogger() Logger {
-	return &logger{
+	return logger{
 		loggers: make(map[zapcore.Level]*zap.SugaredLogger),
 	}
 }
 
-func (l *logger) Initialize() error {
+func (l logger) Initialize() error {
 	encoderConfig := zap.NewProductionEncoderConfig()
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	encoderConfig.MessageKey = "message"
@@ -37,7 +41,9 @@ func (l *logger) Initialize() error {
 		if err != nil {
 			return err
 		}
-	
+
+		fmt.Printf("logFilePath: %s, level: %s\n", logFilePath, level.String())
+
 		cfg := zap.Config{
 			Level:             zap.NewAtomicLevelAt(level),
 			Development:       false,
@@ -47,26 +53,35 @@ func (l *logger) Initialize() error {
 			OutputPaths:       []string{"stdout", logFilePath},
 			ErrorOutputPaths:  []string{"stderr"},
 		}
-	
+
 		zl, err := cfg.Build()
 		if err != nil {
 			return err
 		}
-	
-		l.loggers[level] = zl.Sugar()
+
+		logger := zl.Sugar()
+
+		fmt.Printf("logger: %+v\n", logger)
+
+		l.loggers[level] = logger
 	}
+
+	if len(l.loggers) < 3 {
+		return errors.New("no loggers configured")
+	}
+
 	return nil
 }
 
-func (l *logger) Warn(message string, args ...interface{}) {
+func (l logger) Warn(message string, args ...interface{}) {
 	l.loggers[zapcore.WarnLevel].Warnf(message, args...)
 }
 
-func (l *logger) Info(message string, args ...interface{}) {
+func (l logger) Info(message string, args ...interface{}) {
 	l.loggers[zapcore.InfoLevel].Infof(message, args...)
 }
 
-func (l *logger) Error(message string, args ...interface{}) {
+func (l logger) Error(message string, args ...interface{}) {
 	l.loggers[zapcore.ErrorLevel].Errorf(message, args...)
 }
 

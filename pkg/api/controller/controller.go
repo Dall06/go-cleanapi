@@ -5,6 +5,7 @@ import (
 	"dall06/go-cleanapi/utils"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -38,13 +39,15 @@ type Controller interface {
 	GetAll(context *fiber.Ctx) error
 	Put(context *fiber.Ctx) error
 	Delete(context *fiber.Ctx) error
+	Permision(context *fiber.Ctx) error
 }
 
 type controller struct {
 	usecases usecases.UseCases
 	validate validator.Validate
 	logger   utils.Logger
-	cache *cache.Cache
+	jwt      utils.JWTRepository
+	cache    *cache.Cache
 }
 
 var _ Controller = (*controller)(nil)
@@ -53,17 +56,19 @@ func NewController(
 	uc usecases.UseCases,
 	v validator.Validate,
 	l utils.Logger,
+	j utils.JWTRepository,
 	c cache.Cache,
 ) Controller {
-	return &controller{
+	return controller{
 		usecases: uc,
 		validate: v,
 		logger:   l,
-		cache: &c,
+		jwt: j,
+		cache:    &c,
 	}
 }
 
-func (c *controller) Post(ctx *fiber.Ctx) error {
+func (c controller) Post(ctx *fiber.Ctx) error {
 	req := &PostRequest{}
 
 	if err := ctx.BodyParser(&req); err != nil {
@@ -93,7 +98,7 @@ func (c *controller) Post(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{"msg": registered})
 }
 
-func (c *controller) Get(ctx *fiber.Ctx) error {
+func (c controller) Get(ctx *fiber.Ctx) error {
 	// Get the id parameter from the request context
 	id := ctx.Params("id")
 	if id == "" {
@@ -137,9 +142,9 @@ func (c *controller) Get(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"data": userOutput})
 }
 
-func (c *controller) GetAll(ctx *fiber.Ctx) error {
+func (c controller) GetAll(ctx *fiber.Ctx) error {
 	// check if exists in cache, if yes returns value, if not, continues
-	cachedUsers, found := c.cache.Get("users"); 
+	cachedUsers, found := c.cache.Get("users")
 	if found {
 		usersOutput := cachedUsers.(*Users)
 		return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"data": usersOutput})
@@ -177,7 +182,7 @@ func (c *controller) GetAll(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"data": usersOutput})
 }
 
-func (c *controller) Put(ctx *fiber.Ctx) error {
+func (c controller) Put(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
 	if id == "" {
 		// Return an error response if the id parameter is missing
@@ -213,7 +218,7 @@ func (c *controller) Put(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"msg": modified})
 }
 
-func (c *controller) Delete(ctx *fiber.Ctx) error {
+func (c controller) Delete(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
 	if id == "" {
 		// Return an error response if the id parameter is missing
@@ -244,4 +249,45 @@ func (c *controller) Delete(ctx *fiber.Ctx) error {
 
 	c.logger.Info("%s -> %s: %s", ctx.Method(), processed, ctx.BaseURL())
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"msg": deleted})
+}
+
+func (c controller) Permision(ctx *fiber.Ctx) error {
+	user := ctx.FormValue("user")
+	pass := ctx.FormValue("pass")
+
+	// Throws Unauthorized error
+	if user != "john" || pass != "doe" {
+		return ctx.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	tokenString, err := c.jwt.CreateUserJWT("9322e6dc-23a9-4fdf-aff3-69bdf167c034")
+	if err != nil {
+		c.logger.Error("%s -> %s: %s", ctx.Method(), internalError, err)
+		return fiber.NewError(statusInternalServerError, fmt.Sprintf("%s: %s", internalError, err))
+	}
+
+	const jwtExpirationTime = 72 * time.Hour
+	expiresAt := time.Now().Add(jwtExpirationTime)
+
+	// JWT as a cookie
+	scookie := fiber.Cookie{
+		Name:     "x_session_token",
+		Value:    tokenString,
+		HTTPOnly: true,
+		Expires:  expiresAt,
+	}
+	// apiJWT as Header
+	apijwt, err := c.jwt.CreateApiJWT()
+	if err != nil {
+		c.logger.Error("%s -> %s: %s", ctx.Method(), internalError, err)
+		return fiber.NewError(statusInternalServerError, fmt.Sprintf("%s: %s", internalError, err))
+	}
+
+	// set the values en response ctx
+	ctx.Set("x-access-token", apijwt)
+	ctx.Cookie(&scookie)
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"msg": "permissions generated",
+	})
 }

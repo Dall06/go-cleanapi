@@ -1,3 +1,4 @@
+//go:build !coverage
 // +build !coverage
 
 // individual packages from middleware for fiber are already tested in their own github repository
@@ -97,13 +98,22 @@ func (middleware) Recover() fiber.Handler {
 
 func (middleware) JwtWare() fiber.Handler {
 	cfg := jwtware.Config{
-		SigningKey: []byte(config.JwtSecret),
+		SigningKey:  config.JwtSecret,
+		TokenLookup: "cookie:x-session-token",
 		Filter: func(c *fiber.Ctx) bool {
 			if c.Path() == config.ApiBasePath {
 				return true
 			}
 
-			if c.Path() == config.ApiBasePath+"/user/hello" {
+			if c.Path() == config.ApiBasePath+"/v1/swagger/*" {
+				return true
+			}
+
+			if c.Path() == config.ApiBasePath+"/v1/user/hello" {
+				return true
+			}
+
+			if c.Path() == config.ApiBasePath+"/v1/welcome" {
 				return true
 			}
 
@@ -118,7 +128,26 @@ func (m middleware) KeyAuth() fiber.Handler {
 	cfg := keyauth.Config{
 		KeyLookup: "header:x-access-token",
 		Validator: func(c *fiber.Ctx, jwts string) (bool, error) {
-			return m.jwt.Check(jwts)
+			return m.jwt.CheckApiJwt(jwts)
+		},
+		Filter: func(c *fiber.Ctx) bool {
+			if c.Path() == "http://localhost:8080/swagger/doc.json" {
+				return true
+			}
+
+			if c.Path() == config.ApiBasePath+"/v1/user/hello" {
+				return true
+			}
+
+			if c.Path() == config.ApiBasePath+"/v1/welcome" {
+				return true
+			}
+
+			if c.Path() == config.ApiBasePath+"/v1/swagger/*" {
+				return true
+			}
+
+			return false
 		},
 	}
 	return keyauth.New(cfg)
@@ -128,7 +157,6 @@ func (middleware) CRSF() fiber.Handler {
 	cfg := csrf.Config{
 		Expiration: 15 * time.Minute,
 	}
-
 	// Or extend your config for customization
 	return csrf.New(cfg)
 }

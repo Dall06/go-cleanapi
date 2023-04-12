@@ -52,7 +52,7 @@ func (c DBConn) Open() (*sql.DB, error) {
 	db.SetMaxOpenConns(maxOpenConns)
 	db.SetMaxIdleConns(idleConns)
 
-	c.logger.Info("db connection opened")
+	//c.logger.Info("db connection opened", nil)
 	return db, nil
 }
 
@@ -68,6 +68,6 @@ func (c DBConn) Close(db *sql.DB) error {
 		return err
 	}
 
-	c.logger.Info("db connection closed")
+	//c.logger.Info("db connection closed", nil)
 	return nil
 }
