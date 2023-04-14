@@ -8,7 +8,7 @@ package routes
 
 import (
 	"dall06/go-cleanapi/config"
-	"dall06/go-cleanapi/pkg/api/controller"
+	"dall06/go-cleanapi/pkg/adapter/controller"
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"

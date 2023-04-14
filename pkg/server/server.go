@@ -5,8 +5,8 @@ package server
 
 import (
 	"dall06/go-cleanapi/config"
-	"dall06/go-cleanapi/pkg/api/controller"
-	"dall06/go-cleanapi/pkg/api/routes"
+	"dall06/go-cleanapi/pkg/adapter/controller"
+	"dall06/go-cleanapi/pkg/adapter/routes"
 	"dall06/go-cleanapi/pkg/infrastructure/database"
 	"dall06/go-cleanapi/pkg/infrastructure/middleware"
 	"dall06/go-cleanapi/pkg/internal/repository"
