@@ -1,3 +1,4 @@
+basePath: /go-cleanapi/api/v1
 definitions:
   controller.User:
     properties:
@@ -10,8 +11,12 @@ definitions:
       uid:
         type: string
     type: object
+host: localhost:8080
 info:
   contact: {}
+  description: Golang REST Api based on Uncle's Bob Clean Arch
+  title: go-cleanapi
+  version: "1.0"
 paths:
   /users:
     get:

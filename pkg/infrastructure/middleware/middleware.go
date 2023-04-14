@@ -107,7 +107,7 @@ func (*middleware) JwtWare() fiber.Handler {
 		SigningKey:  config.JWTSecret,
 		TokenLookup: "cookie:x-session-token",
 		Filter: func(c *fiber.Ctx) bool {
-			basePath := fmt.Sprintf("%s/v1", config.APIBasePath)
+			basePath := config.APIBasePath
 			welcomePath := fmt.Sprintf("%s/welcome/", basePath)
 			swaggerPath := fmt.Sprintf("%s/swagger/", basePath)
 
@@ -136,7 +136,7 @@ func (m *middleware) KeyAuth() fiber.Handler {
 			return m.jwt.CheckAPIJwt(jwts)
 		},
 		Filter: func(c *fiber.Ctx) bool {
-			basePath := fmt.Sprintf("%s/v1", config.APIBasePath)
+			basePath := config.APIBasePath
 			welcomePath := fmt.Sprintf("%s/welcome/", basePath)
 			swaggerPath := fmt.Sprintf("%s/swagger/", basePath)
 

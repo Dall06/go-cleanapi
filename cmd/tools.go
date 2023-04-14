@@ -4,7 +4,8 @@ package cmd
 import "flag"
 
 type flagValues struct {
-	port string
+	port    string
+	version string
 }
 
 // Tools is an interface that extend tools
@@ -23,12 +24,18 @@ func NewTools() Tools {
 
 func (*tools) Flags() flagValues {
 	// run app
-	var port string
+	var (
+		port    string
+		version string
+	)
 	flag.StringVar(&port, "p", "8080", "port for http server")
+	flag.StringVar(&version, "v", "1", "version for http server")
+
 	flag.Parse()
 
 	fv := &flagValues{
-		port: port,
+		port:    port,
+		version: version,
 	}
 
 	return *fv

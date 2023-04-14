@@ -34,6 +34,10 @@ var (
 	ProyectPath = ""
 	// CookieSecret is the secret to encode the cookies
 	CookieSecret = ""
+	// APIVersion indicates the version of the api
+	APIVersion = ""
+	// AppName contains the name of the server including version
+	AppName = ""
 )
 
 const (
@@ -56,15 +60,17 @@ type Config interface {
 }
 
 type config struct {
-	port string
+	port    string
+	version string
 }
 
 var _ Config = (*config)(nil)
 
 // NewConfig is a constructor for config
-func NewConfig(p string) Config {
+func NewConfig(p string, v string) Config {
 	return &config{
-		port: p,
+		port:    p,
+		version: v,
 	}
 }
 
@@ -84,9 +90,11 @@ func (c *config) SetConfig() error {
 	}
 	ProyectName = proyectName
 	APIPort = c.port
+	APIVersion = c.version
 
 	CookieSecret = os.Getenv(envCookieEncryption)
-	APIBasePath = fmt.Sprintf("/%s/api", ProyectName)
+	APIBasePath = fmt.Sprintf("/%s/api/v%s", ProyectName, c.version)
+	AppName = fmt.Sprintf("%s v%s", proyectName, APIVersion)
 
 	ak := os.Getenv(envAPIKey)
 	APIKey = ak

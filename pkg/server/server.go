@@ -73,7 +73,7 @@ func (s server) Start() error {
 		Prefork:       false,
 		CaseSensitive: true,
 		ServerHeader:  "go-cleanapi",
-		AppName:       "go-cleanapi_v1.0.0",
+		AppName:       config.AppName,
 	}
 
 	app := fiber.New(cfg)
@@ -91,16 +91,18 @@ func (s server) Start() error {
 	app.Use(mw.Idempotency())
 
 	// generate routing
-	rtsV1 := routes.NewRoutes(app, ctrl)
-	rtsV1.SetV1()
+	rts := routes.NewRoutes(app, ctrl)
+	rts.Set()
 
 	// run gracefully
 	go func() {
 		if err := app.Listen(fmt.Sprintf(":%s", config.APIPort)); err != nil {
 			s.logger.Error("Failed to listen on port", err)
 		}
-		s.logger.Info("Running server...")
 	}()
+
+	s.logger.Info("Running api server version %s in port %s, with base path %s",
+		config.APIVersion, config.APIPort, config.APIBasePath)
 
 	// Gracefully shutdown
 	c := make(chan os.Signal, 1)

@@ -36,8 +36,10 @@ func NewApp(t Tools) App {
 // Main app configuration such as servers, cache and utils
 func (a *app) Main() error {
 	flagValues := a.tools.Flags()
-	port := flagValues.port
-	conf := config.NewConfig(port)
+	prt := flagValues.port
+	ver := flagValues.version
+
+	conf := config.NewConfig(prt, ver)
 	err := conf.SetConfig()
 	if err != nil {
 		return err

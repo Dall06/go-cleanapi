@@ -20,7 +20,7 @@ import (
 
 // Routes is an interface that extends routes
 type Routes interface {
-	SetV1()
+	Set()
 }
 
 var _ Routes = (*routes)(nil)
@@ -38,8 +38,8 @@ func NewRoutes(app *fiber.App, ctrl controller.Controller) Routes {
 	}
 }
 
-func (routes *routes) SetV1() {
-	basePath := fmt.Sprintf("%s/v1", config.APIBasePath)
+func (routes *routes) Set() {
+	basePath := config.APIBasePath
 
 	welcomePath := fmt.Sprintf("%s/welcome/", basePath)
 	routes.app.Get(welcomePath, routes.controller.Permision)
