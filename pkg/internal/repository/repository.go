@@ -1,3 +1,4 @@
+// Package repository provides the methods that intercat with data source
 package repository
 
 import (
@@ -6,6 +7,7 @@ import (
 	"fmt"
 )
 
+// Repository is an interface that extends the repository
 type Repository interface {
 	Create(user *internal.User) error
 	Read(user *internal.User) (*internal.User, error)
@@ -20,6 +22,7 @@ type repository struct {
 	dbConn *sql.DB
 }
 
+// NewRepository is a constructor for a repository
 func NewRepository(db *sql.DB) Repository {
 	return &repository{
 		dbConn: db,
@@ -50,12 +53,12 @@ func (r *repository) Create(user *internal.User) error {
 		return fmt.Errorf("failed to execute SQL statement: %v", err)
 	}
 
-	lastId, err := res.LastInsertId()
+	lastID, err := res.LastInsertId()
 	if err != nil {
 		return fmt.Errorf("failed to obtain rows affected: %v", err)
 	}
 
-	if lastId == 0 {
+	if lastID == 0 {
 		return fmt.Errorf("user not created")
 	}
 
@@ -92,9 +95,13 @@ func (r *repository) ReadAll() (internal.Users, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if cerr := rows.Close(); cerr != nil {
+			err = cerr
+		}
+	}()
 
-	users := make(internal.Users, 0, 100) // allocate slice with initial capacity of 100
+	users := make(internal.Users, 0) // allocate slice
 
 	for rows.Next() {
 		user := &internal.User{}

@@ -1,8 +1,8 @@
 //go:build !coverage
 // +build !coverage
 
+// Package cmd define the main entry point of an application, as well as any command-line utilities or tools that are part of the application.
 // it is just an implementation, the test of the app ocurrs on integration testing in server layer
-
 package cmd
 
 import (
@@ -10,23 +10,34 @@ import (
 	"dall06/go-cleanapi/pkg/server"
 	"dall06/go-cleanapi/utils"
 	"errors"
+	"fmt"
 
 	"github.com/go-playground/validator/v10"
 )
 
-type app struct {
-	port string
+// App is an interface that extends app
+type App interface {
+	Main() error
 }
 
-func NewApp(p string) app {
-	return app{
-		port: p,
+var _ App = (*app)(nil)
+
+type app struct {
+	tools Tools
+}
+
+// NewApp is a constructor for app
+func NewApp(t Tools) App {
+	return &app{
+		tools: t,
 	}
 }
 
-// Load app configuration such as servers, cache and utils
-func (a app) Main() error {
-	conf := config.NewConfig(a.port)
+// Main app configuration such as servers, cache and utils
+func (a *app) Main() error {
+	flagValues := a.tools.Flags()
+	port := flagValues.port
+	conf := config.NewConfig(port)
 	err := conf.SetConfig()
 	if err != nil {
 		return err
@@ -41,6 +52,10 @@ func (a app) Main() error {
 	if l == nil {
 		return errors.New("empty logger repo")
 	}
+	err = l.Initialize()
+	if err != nil {
+		return fmt.Errorf("error when init logger %v: ", err)
+	}
 
 	u := utils.NewUUIDGenerator()
 	if u == nil {
@@ -53,6 +68,9 @@ func (a app) Main() error {
 	}
 
 	s := server.NewServer(l, jwt, u, *v)
-	s.Start()
+	if err := s.Start(); err != nil {
+		return fmt.Errorf("error when starting the server %v: ", err)
+	}
+
 	return nil
 }

@@ -1,25 +1,28 @@
+//go:build !coverage
 // +build !coverage
 
+// Package utils is a package that provides general method for the api usage
 package utils
 
-type jwtMockRepository struct {}
+type jwtMock struct{}
 
-func NewMockJWTRepository() JWTRepository {
-	return jwtMockRepository{}
+// NewJWTMock is a mock for jwt
+func NewJWTMock() JWT {
+	return &jwtMock{}
 }
 
-func (j jwtMockRepository) CreateUserJWT(uid string) (string, error) {
-	return "", nil
+func (j *jwtMock) CreateUserJWT(uid string) (string, error) {
+	return uid, nil
 }
 
-func (j jwtMockRepository) CheckUserJwt(requestToken string) (bool, error) {
+func (j *jwtMock) CheckUserJwt(_ string) (bool, error) {
 	return true, nil
 }
 
-func (j jwtMockRepository) CreateApiJWT() (string, error) {
+func (j *jwtMock) CreateAPIJWT() (string, error) {
 	return "", nil
 }
 
-func (j jwtMockRepository) CheckApiJwt(requestToken string) (bool, error) {
+func (j *jwtMock) CheckAPIJwt(_ string) (bool, error) {
 	return true, nil
 }

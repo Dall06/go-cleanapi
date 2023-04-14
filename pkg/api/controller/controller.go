@@ -1,3 +1,7 @@
+//go:build !exclude_Permision
+// +build !exclude_Permision
+
+// Package controller package is a package that provides handlers of an http to intercat with a data source
 package controller
 
 import (
@@ -23,7 +27,7 @@ const (
 	requestError  = "request error"
 	internalError = "internal error"
 	notFound      = "not Found error"
-	missingId     = "missing id parameter"
+	missingID     = "missing id parameter"
 	userIsNil     = "user is null"
 	usersAreNil   = "users are null"
 	registered    = "account registered successfully"
@@ -33,6 +37,7 @@ const (
 	processed = "request processed"
 )
 
+// Controller is an interface for controller
 type Controller interface {
 	Post(context *fiber.Ctx) error
 	Get(context *fiber.Ctx) error
@@ -46,29 +51,38 @@ type controller struct {
 	usecases usecases.UseCases
 	validate validator.Validate
 	logger   utils.Logger
-	jwt      utils.JWTRepository
+	jwt      utils.JWT
 	cache    *cache.Cache
 }
 
 var _ Controller = (*controller)(nil)
 
+// NewController is a Constructor for controller
 func NewController(
 	uc usecases.UseCases,
 	v validator.Validate,
 	l utils.Logger,
-	j utils.JWTRepository,
+	j utils.JWT,
 	c cache.Cache,
 ) Controller {
-	return controller{
+	return &controller{
 		usecases: uc,
 		validate: v,
 		logger:   l,
-		jwt: j,
+		jwt:      j,
 		cache:    &c,
 	}
 }
 
-func (c controller) Post(ctx *fiber.Ctx) error {
+// @Summary Create a user
+// @Description Create a new user
+// @Accept json
+// @Produce json
+// @Param user body User true "User object"
+// @Success 201 {object} User
+// @Security ApiKeyAuth
+// @Router /users [post]
+func (c *controller) Post(ctx *fiber.Ctx) error {
 	req := &PostRequest{}
 
 	if err := ctx.BodyParser(&req); err != nil {
@@ -98,13 +112,21 @@ func (c controller) Post(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{"msg": registered})
 }
 
-func (c controller) Get(ctx *fiber.Ctx) error {
+// @Summary Get a user by ID
+// @Description Retrieve a single user by ID
+// @Produce json
+// @Param id path int true "User ID"
+// @Success 200 {object} User
+// @Security ApiKeyAuth
+// @Security JwtTokenAuth
+// @Router /users/{id} [get]
+func (c *controller) Get(ctx *fiber.Ctx) error {
 	// Get the id parameter from the request context
 	id := ctx.Params("id")
 	if id == "" {
 		// Return an error response if the id parameter is missing
-		c.logger.Error("%s: %s", requestError, missingId)
-		return fiber.NewError(statusBadRequest, fmt.Sprintf("%s: %s", requestError, missingId))
+		c.logger.Error("%s: %s", requestError, missingID)
+		return fiber.NewError(statusBadRequest, fmt.Sprintf("%s: %s", requestError, missingID))
 	}
 
 	// Call the use case to retrieve the user by id
@@ -142,7 +164,14 @@ func (c controller) Get(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"data": userOutput})
 }
 
-func (c controller) GetAll(ctx *fiber.Ctx) error {
+// @Summary Get all users
+// @Description Retrieve all users
+// @Produce json
+// @Success 200 {array} User
+// @Security ApiKeyAuth
+// @Security JwtTokenAuth
+// @Router /users [get]
+func (c *controller) GetAll(ctx *fiber.Ctx) error {
 	// check if exists in cache, if yes returns value, if not, continues
 	cachedUsers, found := c.cache.Get("users")
 	if found {
@@ -182,12 +211,22 @@ func (c controller) GetAll(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"data": usersOutput})
 }
 
-func (c controller) Put(ctx *fiber.Ctx) error {
+// @Summary Update a user
+// @Description Update a user with a given ID
+// @Accept json
+// @Produce json
+// @Param id path int true "User ID"
+// @Param user body User true "User object"
+// @Success 200 {object} User
+// @Security ApiKeyAuth
+// @Security JwtTokenAuth
+// @Router /users/{id} [put]
+func (c *controller) Put(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
 	if id == "" {
 		// Return an error response if the id parameter is missing
-		c.logger.Error("%s: %s", statusBadRequest, missingId)
-		return fiber.NewError(statusBadRequest, fmt.Sprintf("%s: %s", requestError, missingId))
+		c.logger.Error("%s: %s", statusBadRequest, missingID)
+		return fiber.NewError(statusBadRequest, fmt.Sprintf("%s: %s", requestError, missingID))
 	}
 
 	req := &PutRequest{}
@@ -218,12 +257,19 @@ func (c controller) Put(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"msg": modified})
 }
 
-func (c controller) Delete(ctx *fiber.Ctx) error {
+// @Summary Delete a user
+// @Description Delete a user with a given ID
+// @Param id path int true "User ID"
+// @Success 204
+// @Security ApiKeyAuth
+// @Security JwtTokenAuth
+// @Router /users/{id} [delete]
+func (c *controller) Delete(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
 	if id == "" {
 		// Return an error response if the id parameter is missing
-		c.logger.Error("%s: %s", requestError, missingId)
-		return fiber.NewError(statusBadRequest, fmt.Sprintf("%s: %s", requestError, missingId))
+		c.logger.Error("%s: %s", requestError, missingID)
+		return fiber.NewError(statusBadRequest, fmt.Sprintf("%s: %s", requestError, missingID))
 	}
 
 	req := &DeleteRequest{}
@@ -232,7 +278,7 @@ func (c controller) Delete(ctx *fiber.Ctx) error {
 		return fiber.NewError(statusInternalServerError, fmt.Sprintf("%s: %s", internalError, err))
 	}
 	if err := c.validate.Struct(req); err != nil {
-		c.logger.Error("%s: %s", requestError, missingId)
+		c.logger.Error("%s: %s", requestError, missingID)
 		return fiber.NewError(statusBadRequest, fmt.Sprintf("%s: %s", requestError, err))
 	}
 
@@ -248,10 +294,15 @@ func (c controller) Delete(ctx *fiber.Ctx) error {
 	}
 
 	c.logger.Info("%s -> %s: %s", ctx.Method(), processed, ctx.BaseURL())
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"msg": deleted})
+	return ctx.Status(fiber.StatusNoContent).JSON(fiber.Map{"msg": deleted})
 }
 
-func (c controller) Permision(ctx *fiber.Ctx) error {
+// @Summary Get a api permissions
+// @Description Retrieve api token permissions
+// @Produce json
+// @Success 202 {object} User
+// @Router /welcome [get]
+func (c *controller) Permision(ctx *fiber.Ctx) error {
 	user := ctx.FormValue("user")
 	pass := ctx.FormValue("pass")
 
@@ -277,7 +328,7 @@ func (c controller) Permision(ctx *fiber.Ctx) error {
 		Expires:  expiresAt,
 	}
 	// apiJWT as Header
-	apijwt, err := c.jwt.CreateApiJWT()
+	apijwt, err := c.jwt.CreateAPIJWT()
 	if err != nil {
 		c.logger.Error("%s -> %s: %s", ctx.Method(), internalError, err)
 		return fiber.NewError(statusInternalServerError, fmt.Sprintf("%s: %s", internalError, err))
@@ -287,7 +338,7 @@ func (c controller) Permision(ctx *fiber.Ctx) error {
 	ctx.Set("x-access-token", apijwt)
 	ctx.Cookie(&scookie)
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+	return ctx.Status(fiber.StatusAccepted).JSON(fiber.Map{
 		"msg": "permissions generated",
 	})
 }

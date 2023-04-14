@@ -1,3 +1,6 @@
+// Package server runs the server configuration and initialization
+//
+//go:generate swag init -g server.go
 package server
 
 import (
@@ -19,39 +22,25 @@ import (
 	"github.com/patrickmn/go-cache"
 )
 
-// @title Fiber Swagger Example API
-// @version 2.0
-// @description This is a sample server server.
-// @termsOfService http://swagger.io/terms/
-
-// @contact.name API Support
-// @contact.url http://www.swagger.io/support
-// @contact.email support@swagger.io
-
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-
-// @host localhost:3000
-// @BasePath /
-// @schemes http
-
+// Server is an interface for server
 type Server interface {
 	Start() error
 }
 
 type server struct {
 	logger     utils.Logger
-	jwt        utils.JWTRepository
-	uids       utils.UUIDRepository
+	jwt        utils.JWT
+	uids       utils.UUID
 	validation validator.Validate
 }
 
 var _ Server = (*server)(nil)
 
+// NewServer is a constructor for server
 func NewServer(
 	l utils.Logger,
-	j utils.JWTRepository,
-	u utils.UUIDRepository,
+	j utils.JWT,
+	u utils.UUID,
 	v validator.Validate) Server {
 	return server{
 		logger:     l,
@@ -83,7 +72,6 @@ func (s server) Start() error {
 	cfg := fiber.Config{
 		Prefork:       false,
 		CaseSensitive: true,
-		StrictRouting: true,
 		ServerHeader:  "go-cleanapi",
 		AppName:       "go-cleanapi_v1.0.0",
 	}
@@ -100,6 +88,7 @@ func (s server) Start() error {
 	app.Use(mw.JwtWare())
 	app.Use(mw.KeyAuth())
 	app.Use(mw.CRSF())
+	app.Use(mw.Idempotency())
 
 	// generate routing
 	rtsV1 := routes.NewRoutes(app, ctrl)
@@ -107,7 +96,7 @@ func (s server) Start() error {
 
 	// run gracefully
 	go func() {
-		if err := app.Listen(fmt.Sprintf(":%s", config.ApiPort)); err != nil {
+		if err := app.Listen(fmt.Sprintf(":%s", config.APIPort)); err != nil {
 			s.logger.Error("Failed to listen on port", err)
 		}
 		s.logger.Info("Running server...")

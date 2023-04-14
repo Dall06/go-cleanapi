@@ -1,3 +1,4 @@
+// Package config contains the method to load config variables that will be used in the app
 package config
 
 import (
@@ -13,16 +14,25 @@ import (
 )
 
 var (
-	ApiBasePath = ""
-	ApiPort     = ""
-	ApiKey      = ""
-	ApiKeyHash  = ""
-
+	// APIBasePath makes reference to api basepath
+	APIBasePath = ""
+	// APIPort makes reference to api port
+	APIPort = ""
+	// APIKey makes reference to api key string
+	APIKey = ""
+	// APIKeyHash makes reference to api key string in hash
+	APIKeyHash = ""
+	// DBConnString is the connection string
 	DBConnString = ""
-	JwtSecret    = []byte("")
-	ProyectName  = ""
-	Stage        = ""
-	ProyectPath  = ""
+	// JWTSecret is the secret to generate the jwts
+	JWTSecret = []byte("")
+	// ProyectName means the proyect name
+	ProyectName = ""
+	// Stage is the stage in which the app runs
+	Stage = ""
+	// ProyectPath means the absolute path of th proyect
+	ProyectPath = ""
+	// CookieSecret is the secret to encode the cookies
 	CookieSecret = ""
 )
 
@@ -37,33 +47,35 @@ const (
 	envSecretJWT        = "SECRET_JWT"
 	envStage            = "STAGE"
 	envCookieEncryption = "COOKIE_ENCRYPTION"
-	envApiKey           = "API_KEY"
+	envAPIKey           = "API_KEY"
 )
 
-type ConfigRepository interface {
+// Config is an interface that extends config
+type Config interface {
 	SetConfig() error
 }
 
-type Config struct {
+type config struct {
 	port string
 }
 
-var _ ConfigRepository = (*Config)(nil)
+var _ Config = (*config)(nil)
 
-func NewConfig(p string) ConfigRepository {
-	return &Config{
+// NewConfig is a constructor for config
+func NewConfig(p string) Config {
+	return &config{
 		port: p,
 	}
 }
 
-func (c *Config) SetConfig() error {
+func (c *config) SetConfig() error {
 	if err := c.loadEnv(); err != nil {
 		return err
 	}
 
 	DBConnString = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", //"<user>:<password>@tcp(127.0.0.1:3306)/<dbname>"
 		os.Getenv(envUserDB), os.Getenv(envPasswordDB), os.Getenv(envHostDB), os.Getenv(envPortDB), os.Getenv(envNameDB))
-	JwtSecret = []byte(fmt.Sprint(os.Getenv("SECRET_JWT")))
+	JWTSecret = []byte(fmt.Sprint(os.Getenv("SECRET_JWT")))
 	Stage = strings.ToLower(os.Getenv("STAGE"))
 
 	proyectName, err := c.loadName()
@@ -71,20 +83,20 @@ func (c *Config) SetConfig() error {
 		return err
 	}
 	ProyectName = proyectName
-	ApiPort = c.port
+	APIPort = c.port
 
 	CookieSecret = os.Getenv(envCookieEncryption)
-	ApiBasePath = fmt.Sprintf("/%s/api", ProyectName)
+	APIBasePath = fmt.Sprintf("/%s/api", ProyectName)
 
-	ak := os.Getenv(envApiKey)
-	ApiKey = ak
+	ak := os.Getenv(envAPIKey)
+	APIKey = ak
 	sha := sha512.Sum512_256([]byte(ak))
-	ApiKeyHash = hex.EncodeToString(sha[:])
+	APIKeyHash = hex.EncodeToString(sha[:])
 
 	return nil
 }
 
-func (c *Config) loadEnv() error {
+func (c *config) loadEnv() error {
 	projectPath, err := c.getProjectPath()
 	if err != nil {
 		return err
@@ -101,7 +113,7 @@ func (c *Config) loadEnv() error {
 	return nil
 }
 
-func (c *Config) getProjectPath() (string, error) {
+func (c *config) getProjectPath() (string, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return "", fmt.Errorf("failed to get current working directory: %w", err)
@@ -121,7 +133,7 @@ func (c *Config) getProjectPath() (string, error) {
 	return "", fmt.Errorf("failed to find project root directory")
 }
 
-func (c *Config) loadName() (string, error) {
+func (c *config) loadName() (string, error) {
 	cmd := exec.Command("go", "list", "-m")
 	out, err := cmd.Output()
 	if err != nil {

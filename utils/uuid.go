@@ -1,17 +1,20 @@
+// Package utils is a package that provides general method for the api usage
 package utils
 
 import "github.com/google/uuid"
 
-type UUIDRepository interface {
+// UUID is an interface for uuidGen
+type UUID interface {
 	NewString() string
 	NewUUID() uuid.UUID
 }
 
-var _ UUIDRepository = (*uuidGen)(nil)
+var _ UUID = (*uuidGen)(nil)
 
-type uuidGen struct {}
+type uuidGen struct{}
 
-func NewUUIDGenerator() UUIDRepository {
+// NewUUIDGenerator is a constructir for uidGen
+func NewUUIDGenerator() UUID {
 	return &uuidGen{}
 }
 

@@ -1,13 +1,16 @@
+// Package usecases contains bussines logig cases interface
 package usecases
 
 import (
 	"dall06/go-cleanapi/pkg/internal"
+	"dall06/go-cleanapi/pkg/internal/repository"
 	"dall06/go-cleanapi/utils"
 	"fmt"
 
 	"github.com/mitchellh/mapstructure"
 )
 
+// UseCases is an interface that extend the cases
 type UseCases interface {
 	RegisterUser(req interface{}) error
 	IndexByID(req interface{}) (*internal.User, error)
@@ -19,11 +22,12 @@ type UseCases interface {
 var _ UseCases = (*cases)(nil)
 
 type cases struct {
-	repository Repository
-	uuid       utils.UUIDRepository
+	repository repository.Repository
+	uuid       utils.UUID
 }
 
-func NewUseCases(r Repository, uid utils.UUIDRepository) UseCases {
+// NewUseCases is a construcotr for the cases
+func NewUseCases(r repository.Repository, uid utils.UUID) UseCases {
 	return &cases{
 		repository: r,
 		uuid:       uid,

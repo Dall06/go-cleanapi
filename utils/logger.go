@@ -1,3 +1,4 @@
+// Package utils is a package that provides general method for the api usage
 package utils
 
 import (
@@ -11,6 +12,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// Logger refers to the repository as interface of the logger
 type Logger interface {
 	Initialize() error
 	Warn(message string, args ...interface{})
@@ -24,6 +26,7 @@ type logger struct {
 	loggers map[zapcore.Level]*zap.SugaredLogger
 }
 
+// NewLogger is a function constructor for Logger
 func NewLogger() Logger {
 	return logger{
 		loggers: make(map[zapcore.Level]*zap.SugaredLogger),

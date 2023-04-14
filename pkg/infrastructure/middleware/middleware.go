@@ -1,13 +1,15 @@
 //go:build !coverage
 // +build !coverage
 
+// Package middleware Contains middleware implementation
 // individual packages from middleware for fiber are already tested in their own github repository
-
 package middleware
 
 import (
 	"dall06/go-cleanapi/config"
 	"dall06/go-cleanapi/utils"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -16,13 +18,15 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/csrf"
 	"github.com/gofiber/fiber/v2/middleware/encryptcookie"
 	"github.com/gofiber/fiber/v2/middleware/etag"
+	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/helmet/v2"
 	jwtware "github.com/gofiber/jwt/v3"
 	"github.com/gofiber/keyauth/v2"
 )
 
-type MiddlewareRepository interface {
+// Middleware is an interface that extends middleware
+type Middleware interface {
 	CORS() fiber.Handler
 	Helmet() fiber.Handler
 	Compress() fiber.Handler
@@ -32,21 +36,23 @@ type MiddlewareRepository interface {
 	JwtWare() fiber.Handler
 	KeyAuth() fiber.Handler
 	CRSF() fiber.Handler
+	Idempotency() fiber.Handler
 }
 
-var _ MiddlewareRepository = (*middleware)(nil)
+var _ Middleware = (*middleware)(nil)
 
 type middleware struct {
-	jwt utils.JWTRepository
+	jwt utils.JWT
 }
 
-func NewMiddleware(jr utils.JWTRepository) MiddlewareRepository {
-	return middleware{
+// NewMiddleware is a constructor for middleware
+func NewMiddleware(jr utils.JWT) Middleware {
+	return &middleware{
 		jwt: jr,
 	}
 }
 
-func (middleware) CORS() fiber.Handler {
+func (*middleware) CORS() fiber.Handler {
 	cfg := &cors.Config{
 		AllowOrigins:  "*",
 		AllowHeaders:  "Origin,Content-Type,Accept,X-Session-Token,X-Application-Key",
@@ -57,7 +63,7 @@ func (middleware) CORS() fiber.Handler {
 	return cors.New(*cfg)
 }
 
-func (middleware) Helmet() fiber.Handler {
+func (*middleware) Helmet() fiber.Handler {
 	cfg := helmet.Config{
 		CSPReportOnly: true,
 	}
@@ -65,7 +71,7 @@ func (middleware) Helmet() fiber.Handler {
 	return helmet.New(cfg)
 }
 
-func (middleware) Compress() fiber.Handler {
+func (*middleware) Compress() fiber.Handler {
 	cfg := compress.Config{
 		Next: func(c *fiber.Ctx) bool {
 			return c.Method() != fiber.MethodGet
@@ -75,14 +81,14 @@ func (middleware) Compress() fiber.Handler {
 	return compress.New(cfg)
 }
 
-func (middleware) EncryptCookie() fiber.Handler {
+func (*middleware) EncryptCookie() fiber.Handler {
 	cfg := encryptcookie.Config{
 		Key: config.CookieSecret,
 	}
 	return encryptcookie.New(cfg)
 }
 
-func (middleware) ETag() fiber.Handler {
+func (*middleware) ETag() fiber.Handler {
 	cfg := etag.Config{
 		Next: func(c *fiber.Ctx) bool {
 			return c.Method() != fiber.MethodGet
@@ -92,28 +98,27 @@ func (middleware) ETag() fiber.Handler {
 	return etag.New(cfg)
 }
 
-func (middleware) Recover() fiber.Handler {
+func (*middleware) Recover() fiber.Handler {
 	return recover.New()
 }
 
-func (middleware) JwtWare() fiber.Handler {
+func (*middleware) JwtWare() fiber.Handler {
 	cfg := jwtware.Config{
-		SigningKey:  config.JwtSecret,
+		SigningKey:  config.JWTSecret,
 		TokenLookup: "cookie:x-session-token",
 		Filter: func(c *fiber.Ctx) bool {
-			if c.Path() == config.ApiBasePath {
+			basePath := fmt.Sprintf("%s/v1", config.APIBasePath)
+			welcomePath := fmt.Sprintf("%s/welcome/", basePath)
+			swaggerPath := fmt.Sprintf("%s/swagger/", basePath)
+
+			if c.Path() == welcomePath {
 				return true
 			}
-
-			if c.Path() == config.ApiBasePath+"/v1/swagger/*" {
+			if c.Path() == swaggerPath {
 				return true
 			}
-
-			if c.Path() == config.ApiBasePath+"/v1/user/hello" {
-				return true
-			}
-
-			if c.Path() == config.ApiBasePath+"/v1/welcome" {
+			// Exclude all subroutes of /swagger
+			if strings.HasPrefix(c.Path(), swaggerPath) {
 				return true
 			}
 
@@ -124,26 +129,25 @@ func (middleware) JwtWare() fiber.Handler {
 	return jwtware.New(cfg)
 }
 
-func (m middleware) KeyAuth() fiber.Handler {
+func (m *middleware) KeyAuth() fiber.Handler {
 	cfg := keyauth.Config{
 		KeyLookup: "header:x-access-token",
 		Validator: func(c *fiber.Ctx, jwts string) (bool, error) {
-			return m.jwt.CheckApiJwt(jwts)
+			return m.jwt.CheckAPIJwt(jwts)
 		},
 		Filter: func(c *fiber.Ctx) bool {
-			if c.Path() == "http://localhost:8080/swagger/doc.json" {
+			basePath := fmt.Sprintf("%s/v1", config.APIBasePath)
+			welcomePath := fmt.Sprintf("%s/welcome/", basePath)
+			swaggerPath := fmt.Sprintf("%s/swagger/", basePath)
+
+			if c.Path() == welcomePath {
 				return true
 			}
-
-			if c.Path() == config.ApiBasePath+"/v1/user/hello" {
+			if c.Path() == swaggerPath {
 				return true
 			}
-
-			if c.Path() == config.ApiBasePath+"/v1/welcome" {
-				return true
-			}
-
-			if c.Path() == config.ApiBasePath+"/v1/swagger/*" {
+			// Exclude all subroutes of /swagger
+			if strings.HasPrefix(c.Path(), swaggerPath) {
 				return true
 			}
 
@@ -153,10 +157,14 @@ func (m middleware) KeyAuth() fiber.Handler {
 	return keyauth.New(cfg)
 }
 
-func (middleware) CRSF() fiber.Handler {
+func (*middleware) CRSF() fiber.Handler {
 	cfg := csrf.Config{
 		Expiration: 15 * time.Minute,
 	}
 	// Or extend your config for customization
 	return csrf.New(cfg)
+}
+
+func (*middleware) Idempotency() fiber.Handler {
+	return idempotency.New()
 }

@@ -1,4 +1,126 @@
+definitions:
+  controller.User:
+    properties:
+      mail:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+      uid:
+        type: string
+    type: object
 info:
   contact: {}
-paths: {}
+paths:
+  /users:
+    get:
+      description: Retrieve all users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controller.User'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      - JwtTokenAuth: []
+      summary: Get all users
+    post:
+      consumes:
+      - application/json
+      description: Create a new user
+      parameters:
+      - description: User object
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/controller.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controller.User'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a user
+  /users/{id}:
+    delete:
+      description: Delete a user with a given ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+      security:
+      - ApiKeyAuth: []
+      - JwtTokenAuth: []
+      summary: Delete a user
+    get:
+      description: Retrieve a single user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.User'
+      security:
+      - ApiKeyAuth: []
+      - JwtTokenAuth: []
+      summary: Get a user by ID
+    put:
+      consumes:
+      - application/json
+      description: Update a user with a given ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: User object
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/controller.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.User'
+      security:
+      - ApiKeyAuth: []
+      - JwtTokenAuth: []
+      summary: Update a user
+  /welcome:
+    get:
+      description: Retrieve api token permissions
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/controller.User'
+      summary: Get a api permissions
 swagger: "2.0"

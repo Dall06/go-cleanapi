@@ -1,3 +1,4 @@
+// Package utils is a package that provides general method for the api usage
 package utils
 
 import (
@@ -23,14 +24,15 @@ type apiClaims struct {
 	jwt.RegisteredClaims
 }
 
-type JWTRepository interface {
+// JWT is an interface for jwt util
+type JWT interface {
 	CreateUserJWT(uid string) (string, error)
 	CheckUserJwt(requestToken string) (bool, error)
-	CreateApiJWT() (string, error)
-	CheckApiJwt(requestToken string) (bool, error)
+	CreateAPIJWT() (string, error)
+	CheckAPIJwt(requestToken string) (bool, error)
 }
 
-var _ JWTRepository = (*myJwt)(nil)
+var _ JWT = (*myJwt)(nil)
 
 type myJwt struct {
 	secret []byte
@@ -38,10 +40,10 @@ type myJwt struct {
 }
 
 // NewJWT returns a pointer to a JwtUtil struct.
-func NewJWT() JWTRepository {
+func NewJWT() JWT {
 	return &myJwt{
-		secret: config.JwtSecret,
-		apiKey: config.ApiKey,
+		secret: config.JWTSecret,
+		apiKey: config.APIKey,
 	}
 }
 
@@ -91,8 +93,8 @@ func (ju *myJwt) CheckUserJwt(requestToken string) (bool, error) {
 	return true, nil
 }
 
-func (ju *myJwt) CreateApiJWT() (string, error) {
-	apiKey := config.ApiKey
+func (ju *myJwt) CreateAPIJWT() (string, error) {
+	apiKey := config.APIKey
 	if apiKey == "" {
 		return "", errors.New("id cannot be empty")
 	}
@@ -121,8 +123,8 @@ func (ju *myJwt) CreateApiJWT() (string, error) {
 	return signedToken, nil
 }
 
-func (ju *myJwt) CheckApiJwt(requestToken string) (bool, error) {
-	apiKeyHash := config.ApiKeyHash
+func (ju *myJwt) CheckAPIJwt(requestToken string) (bool, error) {
+	apiKeyHash := config.APIKeyHash
 	if apiKeyHash == "" {
 		return false, errors.New("id cannot be empty")
 	}

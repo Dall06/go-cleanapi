@@ -1,3 +1,4 @@
+// Package database is the package that contains the sql driver
 package database
 
 import (
@@ -7,36 +8,38 @@ import (
 	"errors"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql" // this package registers the mysql driver with sql
 )
 
-type DBRepository interface {
+// DB is an interface that extend dbConn
+type DB interface {
 	Open() (*sql.DB, error)
 	Close(db *sql.DB) error
 }
 
 const (
 	emptyConnectionString = "empty connection string"
-	emptyDBConn = "empty connection"
-	dbEngine = "mysql"
-	maxLifeTime = time.Minute * 3
-	maxOpenConns = 10
-	idleConns = 10
+	emptydbConn           = "empty connection"
+	dbEngine              = "mysql"
+	maxLifeTime           = time.Minute * 3
+	maxOpenConns          = 10
+	idleConns             = 10
 )
 
-var _ DBRepository = (*DBConn)(nil)
+var _ DB = (*dbConn)(nil)
 
-type DBConn struct{
+type dbConn struct {
 	logger utils.Logger
 }
 
-func NewDBConn(l utils.Logger) DBRepository {
-	return DBConn{
+// NewDBConn is a constructor for dbConn
+func NewDBConn(l utils.Logger) DB {
+	return &dbConn{
 		logger: l,
 	}
 }
 
-func (c DBConn) Open() (*sql.DB, error) {
+func (c *dbConn) Open() (*sql.DB, error) {
 	if config.DBConnString == "" {
 		c.logger.Warn("db connection failed: %v", emptyConnectionString)
 		return nil, errors.New(emptyConnectionString)
@@ -56,10 +59,10 @@ func (c DBConn) Open() (*sql.DB, error) {
 	return db, nil
 }
 
-func (c DBConn) Close(db *sql.DB) error {
+func (c *dbConn) Close(db *sql.DB) error {
 	if db == nil {
 		c.logger.Warn("db connection close failed: %s", emptyConnectionString)
-		return errors.New(emptyDBConn)
+		return errors.New(emptydbConn)
 	}
 
 	err := db.Close()
