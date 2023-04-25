@@ -4,7 +4,7 @@
         "description": "Golang REST Api based on Uncle's Bob Clean Arch",
         "title": "go-cleanapi",
         "contact": {},
-        "version": "1.0"
+        "version": "1.0.0"
     },
     "host": "localhost:8080",
     "basePath": "/go-cleanapi/api/v1",
@@ -52,12 +52,12 @@
                 "summary": "Create a user",
                 "parameters": [
                     {
-                        "description": "User object",
+                        "description": "PostRequest object",
                         "name": "user",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.User"
+                            "$ref": "#/definitions/controller.PostRequest"
                         }
                     }
                 ],
@@ -65,7 +65,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/controller.User"
+                            "type": "string"
                         }
                     }
                 }
@@ -130,12 +130,12 @@
                         "required": true
                     },
                     {
-                        "description": "User object",
+                        "description": "PutRequest object",
                         "name": "user",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.User"
+                            "$ref": "#/definitions/controller.PutRequest"
                         }
                     }
                 ],
@@ -143,7 +143,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controller.User"
+                            "type": "string"
                         }
                     }
                 }
@@ -166,6 +166,15 @@
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "DeleteRequest object",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.DeleteRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -194,6 +203,52 @@
         }
     },
     "definitions": {
+        "controller.DeleteRequest": {
+            "type": "object",
+            "required": [
+                "password"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.PostRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.PutRequest": {
+            "type": "object",
+            "required": [
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
         "controller.User": {
             "type": "object",
             "properties": {

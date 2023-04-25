@@ -13,8 +13,9 @@ import (
 // UseCases is an interface that extend the cases
 type UseCases interface {
 	RegisterUser(req interface{}) error
-	IndexByID(req interface{}) (*internal.User, error)
-	IndexAll() (internal.Users, error)
+	AuthUser(req interface{}) (*internal.User, error)
+	IndexUserByID(req interface{}) (*internal.User, error)
+	IndexUsers() (internal.Users, error)
 	ModifyUser(req interface{}) error
 	DestroyUser(req interface{}) error
 }
@@ -32,6 +33,27 @@ func NewUseCases(r repository.Repository, uid utils.UUID) UseCases {
 		repository: r,
 		uuid:       uid,
 	}
+}
+
+func (s *cases) AuthUser(req interface{}) (*internal.User, error) {
+	user := &internal.User{}
+
+	if req == nil {
+		return nil, fmt.Errorf("empty request")
+	}
+
+	err := mapstructure.Decode(req, &user)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode user details: %v", err)
+	}
+
+	// add uuidGenerator to the user
+	res, err := s.repository.Login(user)
+	if err != nil {
+		return nil, fmt.Errorf("failed to auth user details: %v", err)
+	}
+
+	return res, nil
 }
 
 func (s *cases) RegisterUser(req interface{}) error {
@@ -56,7 +78,7 @@ func (s *cases) RegisterUser(req interface{}) error {
 	return nil
 }
 
-func (s *cases) IndexByID(req interface{}) (*internal.User, error) {
+func (s *cases) IndexUserByID(req interface{}) (*internal.User, error) {
 	user := &internal.User{}
 
 	if req == nil {
@@ -76,7 +98,7 @@ func (s *cases) IndexByID(req interface{}) (*internal.User, error) {
 	return res, nil
 }
 
-func (s *cases) IndexAll() (internal.Users, error) {
+func (s *cases) IndexUsers() (internal.Users, error) {
 	users, err := s.repository.ReadAll()
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch user details: %v", err)

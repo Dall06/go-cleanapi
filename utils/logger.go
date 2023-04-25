@@ -24,12 +24,14 @@ var _ Logger = (*logger)(nil)
 
 type logger struct {
 	loggers map[zapcore.Level]*zap.SugaredLogger
+	config  config.Vars
 }
 
 // NewLogger is a function constructor for Logger
-func NewLogger() Logger {
+func NewLogger(v config.Vars) Logger {
 	return logger{
 		loggers: make(map[zapcore.Level]*zap.SugaredLogger),
+		config:  v,
 	}
 }
 
@@ -40,7 +42,7 @@ func (l logger) Initialize() error {
 	encoderConfig.LevelKey = "severity"
 
 	for _, level := range []zapcore.Level{zap.WarnLevel, zap.InfoLevel, zap.ErrorLevel} {
-		logFilePath, err := getLogFilePath(config.Stage, level.String())
+		logFilePath, err := l.getLogFilePath(l.config.Stage, level.String())
 		if err != nil {
 			return err
 		}
@@ -88,9 +90,9 @@ func (l logger) Error(message string, args ...interface{}) {
 	l.loggers[zapcore.ErrorLevel].Errorf(message, args...)
 }
 
-func getLogFilePath(stage string, level string) (string, error) {
+func (l logger) getLogFilePath(stage string, level string) (string, error) {
 	dirName := "logs"
-	dir := filepath.Join(config.ProyectPath, dirName)
+	dir := filepath.Join(l.config.ProyectPath, dirName)
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 		return "", err
 	}

@@ -22,7 +22,7 @@ type loggerMock struct {
 
 // NewLoggerMock is a consturcotr to genrate a logger mock
 func NewLoggerMock() Logger {
-	return loggerMock{}
+	return &loggerMock{}
 }
 
 func (l loggerMock) Initialize() error {

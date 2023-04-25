@@ -6,6 +6,7 @@
 package cmd
 
 import (
+	"dall06/go-cleanapi/cmd/tools"
 	"dall06/go-cleanapi/config"
 	"dall06/go-cleanapi/pkg/server"
 	"dall06/go-cleanapi/utils"
@@ -23,34 +24,33 @@ type App interface {
 var _ App = (*app)(nil)
 
 type app struct {
-	tools Tools
 }
 
 // NewApp is a constructor for app
-func NewApp(t Tools) App {
-	return &app{
-		tools: t,
-	}
+func NewApp() App {
+	return &app{}
 }
 
 // Main app configuration such as servers, cache and utils
 func (a *app) Main() error {
-	flagValues := a.tools.Flags()
-	prt := flagValues.port
-	ver := flagValues.version
+	flags := tools.NewFlags()
+	flagValues := flags.Flags()
+
+	prt := flagValues.Port
+	ver := flagValues.Version
 
 	conf := config.NewConfig(prt, ver)
-	err := conf.SetConfig()
+	v, err := conf.SetConfig()
 	if err != nil {
 		return err
 	}
 
-	jwt := utils.NewJWT()
+	jwt := utils.NewJWT(*v)
 	if jwt == nil {
 		return errors.New("empty jwt repo")
 	}
 
-	l := utils.NewLogger()
+	l := utils.NewLogger(*v)
 	if l == nil {
 		return errors.New("empty logger repo")
 	}
@@ -64,12 +64,17 @@ func (a *app) Main() error {
 		return errors.New("empty uid generator repo")
 	}
 
-	v := validator.New()
-	if v == nil {
+	vals := utils.NewValidations()
+	if u == nil {
+		return errors.New("empty uid generator repo")
+	}
+
+	val := validator.New()
+	if val == nil {
 		return errors.New("empty validator repo")
 	}
 
-	s := server.NewServer(l, jwt, u, *v)
+	s := server.NewServer(*v, l, jwt, u, vals, *val)
 	if err := s.Start(); err != nil {
 		return fmt.Errorf("error when starting the server %v: ", err)
 	}

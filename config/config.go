@@ -13,32 +13,33 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var (
+// Vars are config variables
+type Vars struct {
 	// APIBasePath makes reference to api basepath
-	APIBasePath = ""
+	APIBasePath string
 	// APIPort makes reference to api port
-	APIPort = ""
+	APIPort string
 	// APIKey makes reference to api key string
-	APIKey = ""
+	APIKey string
 	// APIKeyHash makes reference to api key string in hash
-	APIKeyHash = ""
+	APIKeyHash string
 	// DBConnString is the connection string
-	DBConnString = ""
+	DBConnString string
 	// JWTSecret is the secret to generate the jwts
-	JWTSecret = []byte("")
+	JWTSecret []byte
 	// ProyectName means the proyect name
-	ProyectName = ""
+	ProyectName string
 	// Stage is the stage in which the app runs
-	Stage = ""
+	Stage string
 	// ProyectPath means the absolute path of th proyect
-	ProyectPath = ""
+	ProyectPath string
 	// CookieSecret is the secret to encode the cookies
-	CookieSecret = ""
+	CookieSecret string
 	// APIVersion indicates the version of the api
-	APIVersion = ""
+	APIVersion string
 	// AppName contains the name of the server including version
-	AppName = ""
-)
+	AppName string
+}
 
 const (
 	file = ".env"
@@ -56,12 +57,13 @@ const (
 
 // Config is an interface that extends config
 type Config interface {
-	SetConfig() error
+	SetConfig() (*Vars, error)
 }
 
 type config struct {
 	port    string
 	version string
+	Vars    Vars
 }
 
 var _ Config = (*config)(nil)
@@ -74,34 +76,41 @@ func NewConfig(p string, v string) Config {
 	}
 }
 
-func (c *config) SetConfig() error {
-	if err := c.loadEnv(); err != nil {
-		return err
+func (c *config) SetConfig() (*Vars, error) {
+	if c.port == "" {
+		return nil, fmt.Errorf("empty port parameter")
+	}
+	if c.version == "" {
+		return nil, fmt.Errorf("empty version parameter")
 	}
 
-	DBConnString = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", //"<user>:<password>@tcp(127.0.0.1:3306)/<dbname>"
+	if err := c.loadEnv(); err != nil {
+		return nil, err
+	}
+
+	c.Vars.DBConnString = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", //"<user>:<password>@tcp(127.0.0.1:3306)/<dbname>"
 		os.Getenv(envUserDB), os.Getenv(envPasswordDB), os.Getenv(envHostDB), os.Getenv(envPortDB), os.Getenv(envNameDB))
-	JWTSecret = []byte(fmt.Sprint(os.Getenv("SECRET_JWT")))
-	Stage = strings.ToLower(os.Getenv("STAGE"))
+	c.Vars.JWTSecret = []byte(fmt.Sprint(os.Getenv("SECRET_JWT")))
+	c.Vars.Stage = strings.ToLower(os.Getenv("STAGE"))
 
 	proyectName, err := c.loadName()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	ProyectName = proyectName
-	APIPort = c.port
-	APIVersion = c.version
+	c.Vars.ProyectName = proyectName
+	c.Vars.APIPort = c.port
+	c.Vars.APIVersion = c.version
 
-	CookieSecret = os.Getenv(envCookieEncryption)
-	APIBasePath = fmt.Sprintf("/%s/api/v%s", ProyectName, c.version)
-	AppName = fmt.Sprintf("%s v%s", proyectName, APIVersion)
+	c.Vars.CookieSecret = os.Getenv(envCookieEncryption)
+	c.Vars.APIBasePath = fmt.Sprintf("/%s/api/v%s", c.Vars.ProyectName, c.version)
+	c.Vars.AppName = fmt.Sprintf("%s v%s", proyectName, c.Vars.APIVersion)
 
 	ak := os.Getenv(envAPIKey)
-	APIKey = ak
+	c.Vars.APIKey = ak
 	sha := sha512.Sum512_256([]byte(ak))
-	APIKeyHash = hex.EncodeToString(sha[:])
+	c.Vars.APIKeyHash = hex.EncodeToString(sha[:])
 
-	return nil
+	return &c.Vars, nil
 }
 
 func (c *config) loadEnv() error {
@@ -109,7 +118,7 @@ func (c *config) loadEnv() error {
 	if err != nil {
 		return err
 	}
-	ProyectPath = projectPath
+	c.Vars.ProyectPath = projectPath
 
 	filePath := filepath.Join(projectPath, file)
 

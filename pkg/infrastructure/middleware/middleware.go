@@ -42,13 +42,15 @@ type Middleware interface {
 var _ Middleware = (*middleware)(nil)
 
 type middleware struct {
-	jwt utils.JWT
+	jwt    utils.JWT
+	config config.Vars
 }
 
 // NewMiddleware is a constructor for middleware
-func NewMiddleware(jr utils.JWT) Middleware {
+func NewMiddleware(vars config.Vars, jr utils.JWT) Middleware {
 	return &middleware{
-		jwt: jr,
+		jwt:    jr,
+		config: vars,
 	}
 }
 
@@ -81,9 +83,9 @@ func (*middleware) Compress() fiber.Handler {
 	return compress.New(cfg)
 }
 
-func (*middleware) EncryptCookie() fiber.Handler {
+func (m *middleware) EncryptCookie() fiber.Handler {
 	cfg := encryptcookie.Config{
-		Key: config.CookieSecret,
+		Key: m.config.CookieSecret,
 	}
 	return encryptcookie.New(cfg)
 }
@@ -102,12 +104,12 @@ func (*middleware) Recover() fiber.Handler {
 	return recover.New()
 }
 
-func (*middleware) JwtWare() fiber.Handler {
+func (m *middleware) JwtWare() fiber.Handler {
 	cfg := jwtware.Config{
-		SigningKey:  config.JWTSecret,
-		TokenLookup: "cookie:x-session-token",
+		SigningKey:  m.config.JWTSecret,
+		TokenLookup: "cookie:session_id",
 		Filter: func(c *fiber.Ctx) bool {
-			basePath := config.APIBasePath
+			basePath := m.config.APIBasePath
 			welcomePath := fmt.Sprintf("%s/welcome/", basePath)
 			swaggerPath := fmt.Sprintf("%s/swagger/", basePath)
 
@@ -133,10 +135,10 @@ func (m *middleware) KeyAuth() fiber.Handler {
 	cfg := keyauth.Config{
 		KeyLookup: "header:x-access-token",
 		Validator: func(c *fiber.Ctx, jwts string) (bool, error) {
-			return m.jwt.CheckAPIJwt(jwts)
+			return m.jwt.CheckAPIJWT(jwts)
 		},
 		Filter: func(c *fiber.Ctx) bool {
-			basePath := config.APIBasePath
+			basePath := m.config.APIBasePath
 			welcomePath := fmt.Sprintf("%s/welcome/", basePath)
 			swaggerPath := fmt.Sprintf("%s/swagger/", basePath)
 

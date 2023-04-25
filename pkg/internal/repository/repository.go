@@ -7,6 +7,15 @@ import (
 	"fmt"
 )
 
+const (
+	spCreate  = "CALL `go_cleanapi`.`sp_create_user`(?, ?, ?, ?);"
+	spRead    = "CALL `go_cleanapi`.`sp_read_user`(?);"
+	spReadAll = "CALL `go_cleanapi`.`sp_read_users`();"
+	spUpdate  = "CALL `go_cleanapi`.`sp_update_user`(?, ?, ?, ?);"
+	spDelete  = "CALL `go_cleanapi`.`sp_delete_user`(?, ?);"
+	spLogin   = "CALL `go_cleanapi`.`sp_login_user`(?, ?, ?);"
+)
+
 // Repository is an interface that extends the repository
 type Repository interface {
 	Create(user *internal.User) error
@@ -14,6 +23,7 @@ type Repository interface {
 	ReadAll() (internal.Users, error)
 	Update(user *internal.User) error
 	Delete(user *internal.User) error
+	Login(user *internal.User) (*internal.User, error)
 }
 
 var _ Repository = (*repository)(nil)
@@ -29,22 +39,58 @@ func NewRepository(db *sql.DB) Repository {
 	}
 }
 
+func (r *repository) Login(user *internal.User) (*internal.User, error) {
+	if user == nil {
+		return nil, fmt.Errorf("user is required")
+	}
+	if user.Email == "" && user.Phone == "" {
+		return nil, fmt.Errorf("data is required")
+	}
+	if user.Email != "" && user.Phone != "" {
+		return nil, fmt.Errorf("only one parameter is required")
+	}
+	if user.Password == "" {
+		return nil, fmt.Errorf("password is required")
+	}
+	// Add more validation checks as needed.
+	row := r.dbConn.QueryRow(spLogin,
+		user.Email,
+		user.Phone,
+		user.Password)
+	if row == nil {
+		empty := &internal.User{}
+		return empty, nil
+	}
+
+	u := &internal.User{}
+
+	err := row.Scan(&u.ID)
+	if err == sql.ErrNoRows {
+		return nil, sql.ErrNoRows
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return u, nil
+}
+
 func (r *repository) Create(user *internal.User) error {
 	if user == nil {
 		return fmt.Errorf("user is empty")
 	}
 	if user.ID == "" {
-		return fmt.Errorf("user ID is empty")
+		return fmt.Errorf("ID is required")
 	}
 	if user.Email == "" {
-		return fmt.Errorf("user email is empty")
+		return fmt.Errorf("email is required")
 	}
 	if user.Password == "" {
-		return fmt.Errorf("user password is empty")
+		return fmt.Errorf("password is required")
 	}
 	// Add more validation checks as needed.
 
-	res, err := r.dbConn.Exec(spCreate,
+	_, err := r.dbConn.Exec(spCreate,
 		user.ID,
 		user.Email,
 		user.Phone,
@@ -53,34 +99,30 @@ func (r *repository) Create(user *internal.User) error {
 		return fmt.Errorf("failed to execute SQL statement: %v", err)
 	}
 
-	lastID, err := res.LastInsertId()
-	if err != nil {
-		return fmt.Errorf("failed to obtain rows affected: %v", err)
-	}
-
-	if lastID == 0 {
-		return fmt.Errorf("user not created")
-	}
-
 	return nil
 }
 
 func (r repository) Read(user *internal.User) (*internal.User, error) {
 	if user == nil {
-		return nil, fmt.Errorf("user is empty")
+		return nil, fmt.Errorf("user is required")
 	}
 	if user.ID == "" {
-		return nil, fmt.Errorf("user ID is empty")
+		return nil, fmt.Errorf("ID is required")
 	}
 
 	u := &internal.User{}
 
-	err := r.dbConn.QueryRow(spRead, user.ID).Scan(
+	row := r.dbConn.QueryRow(spRead, user.ID)
+	if row == nil {
+		empty := &internal.User{}
+		return empty, nil
+	}
+
+	err := row.Scan(
 		&u.ID,
 		&u.Email,
 		&u.Phone)
 	if err == sql.ErrNoRows {
-		// double nil because i consider that no rows found is more as a goo request but with an empty result
 		return nil, sql.ErrNoRows
 	}
 	if err != nil {
@@ -121,21 +163,25 @@ func (r *repository) ReadAll() (internal.Users, error) {
 		return nil, err
 	}
 
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+
 	return users, nil
 }
 
 func (r repository) Update(user *internal.User) error {
 	if user == nil {
-		return fmt.Errorf("user is empty")
+		return fmt.Errorf("user is required")
 	}
 	if user.ID == "" {
-		return fmt.Errorf("user ID is empty")
+		return fmt.Errorf("ID is resquired")
 	}
 	if user.Password == "" {
-		return fmt.Errorf("user password is empty")
+		return fmt.Errorf("password is required")
 	}
 	if user.Email == "" && user.Phone == "" {
-		return fmt.Errorf("user data is empty")
+		return fmt.Errorf("user data is required")
 	}
 
 	res, err := r.dbConn.Exec(spUpdate,
@@ -153,7 +199,7 @@ func (r repository) Update(user *internal.User) error {
 	}
 
 	if affected == 0 {
-		return fmt.Errorf("user not created")
+		return fmt.Errorf("user not updated")
 	}
 
 	return nil
@@ -161,13 +207,13 @@ func (r repository) Update(user *internal.User) error {
 
 func (r repository) Delete(user *internal.User) error {
 	if user == nil {
-		return fmt.Errorf("user is empty")
+		return fmt.Errorf("user is required")
 	}
 	if user.ID == "" {
-		return fmt.Errorf("user ID is empty")
+		return fmt.Errorf("ID is required")
 	}
 	if user.Password == "" {
-		return fmt.Errorf("user email is password")
+		return fmt.Errorf("password is required")
 	}
 
 	res, err := r.dbConn.Exec(spDelete, user.ID, user.Password)
@@ -181,7 +227,7 @@ func (r repository) Delete(user *internal.User) error {
 	}
 
 	if affected == 0 {
-		return fmt.Errorf("user not created")
+		return fmt.Errorf("user not deleted")
 	}
 
 	return nil

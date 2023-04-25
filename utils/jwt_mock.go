@@ -23,6 +23,6 @@ func (j *jwtMock) CreateAPIJWT() (string, error) {
 	return "", nil
 }
 
-func (j *jwtMock) CheckAPIJwt(_ string) (bool, error) {
+func (j *jwtMock) CheckAPIJWT(_ string) (bool, error) {
 	return true, nil
 }

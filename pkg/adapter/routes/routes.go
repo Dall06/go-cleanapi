@@ -27,19 +27,21 @@ var _ Routes = (*routes)(nil)
 
 type routes struct {
 	app        *fiber.App
+	config     config.Vars
 	controller controller.Controller
 }
 
 // NewRoutes is a constructor for routes generator
-func NewRoutes(app *fiber.App, ctrl controller.Controller) Routes {
+func NewRoutes(app *fiber.App, vars config.Vars, ctrl controller.Controller) Routes {
 	return &routes{
 		app:        app,
+		config:     vars,
 		controller: ctrl,
 	}
 }
 
 func (routes *routes) Set() {
-	basePath := config.APIBasePath
+	basePath := routes.config.APIBasePath
 
 	welcomePath := fmt.Sprintf("%s/welcome/", basePath)
 	routes.app.Get(welcomePath, routes.controller.Permision)

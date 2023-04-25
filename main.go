@@ -11,8 +11,7 @@ import (
 // @host localhost:8080
 // @BasePath /go-cleanapi/api/v1
 func main() {
-	tools := cmd.NewTools()
-	app := cmd.NewApp(tools)
+	app := cmd.NewApp()
 
 	err := app.Main()
 	if err != nil {

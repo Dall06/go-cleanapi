@@ -39,6 +39,7 @@ const (
 
 // Controller is an interface for controller
 type Controller interface {
+	Auth(context *fiber.Ctx) error
 	Post(context *fiber.Ctx) error
 	Get(context *fiber.Ctx) error
 	GetAll(context *fiber.Ctx) error
@@ -48,11 +49,12 @@ type Controller interface {
 }
 
 type controller struct {
-	usecases usecases.UseCases
-	validate validator.Validate
-	logger   utils.Logger
-	jwt      utils.JWT
-	cache    *cache.Cache
+	usecases    usecases.UseCases
+	validate    validator.Validate
+	logger      utils.Logger
+	jwt         utils.JWT
+	validations utils.Validations
+	cache       *cache.Cache
 }
 
 var _ Controller = (*controller)(nil)
@@ -63,14 +65,16 @@ func NewController(
 	v validator.Validate,
 	l utils.Logger,
 	j utils.JWT,
+	val utils.Validations,
 	c cache.Cache,
 ) Controller {
 	return &controller{
-		usecases: uc,
-		validate: v,
-		logger:   l,
-		jwt:      j,
-		cache:    &c,
+		usecases:    uc,
+		validate:    v,
+		logger:      l,
+		jwt:         j,
+		validations: val,
+		cache:       &c,
 	}
 }
 
@@ -78,10 +82,69 @@ func NewController(
 // @Description Create a new user
 // @Accept json
 // @Produce json
-// @Param user body User true "User object"
-// @Success 201 {object} User
+// @Param user body PostRequest true "PostRequest object"
+// @Success 201 {string} Created
 // @Security ApiKeyAuth
 // @Router /users [post]
+func (c *controller) Auth(ctx *fiber.Ctx) error {
+	req := &AuthRequest{
+		UserName: ctx.FormValue("user"),
+		Password: ctx.FormValue("password"),
+	}
+	userInput := &User{}
+
+	if err := c.validate.Struct(req); err != nil {
+		c.logger.Error("%s: %s", requestError, err)
+		return fiber.NewError(statusBadRequest, fmt.Sprintf("%s: %s", requestError, err))
+	}
+
+	userName := req.UserName
+
+	isEmail := c.validations.IsEmail(userName)
+	if isEmail {
+		userInput.Email = userName
+	}
+
+	isPhone := c.validations.IsPhone(userName)
+	if isPhone {
+		userInput.Phone = userName
+	}
+
+	res, err := c.usecases.AuthUser(userInput)
+	if err != nil {
+		// Return an error response if the use case returns an error
+		c.logger.Error("%s -> %s: %s", ctx.Method(), internalError, err)
+		return fiber.NewError(statusInternalServerError, fmt.Sprintf("%s: %s", internalError, err))
+	}
+	if res == nil {
+		// Return an error response if the use case returns an error
+		c.logger.Error("%s -> %s: %s", ctx.Method(), internalError, userIsNil)
+		return fiber.NewError(statusInternalServerError, fmt.Sprintf("%s: %s", internalError, userIsNil))
+	}
+	if res.ID == "" {
+		// Return an error response if the use case returns an error
+		c.logger.Error("%s -> %s: %s", ctx.Method(), internalError, missingID)
+		return fiber.NewError(statusInternalServerError, fmt.Sprintf("%s: %s", internalError, missingID))
+	}
+
+	accessToken, err := c.jwt.CreateUserJWT(res.ID)
+	if err != nil {
+		// Return an error response if the use case returns an error
+		c.logger.Error("%s -> %s: %s", ctx.Method(), internalError, userIsNil)
+		return fiber.NewError(statusInternalServerError, fmt.Sprintf("%s: %s", internalError, userIsNil))
+	}
+
+	// Create cookie
+	cookie := new(fiber.Cookie)
+	cookie.Name = "session_id"
+	cookie.Value = accessToken
+	cookie.Expires = time.Now().Add(15 * time.Hour)
+
+	c.logger.Info("%s -> %s: %s", ctx.Method(), processed, ctx.BaseURL())
+	ctx.Cookie(cookie)
+	return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{"msg": registered})
+}
+
 func (c *controller) Post(ctx *fiber.Ctx) error {
 	req := &PostRequest{}
 
@@ -131,7 +194,7 @@ func (c *controller) Get(ctx *fiber.Ctx) error {
 
 	// Call the use case to retrieve the user by id
 	userInput := &User{ID: id}
-	userData, err := c.usecases.IndexByID(userInput)
+	userData, err := c.usecases.IndexUserByID(userInput)
 	if err != nil {
 		// Return an error response if the use case returns an error
 		c.logger.Error("%s -> %s: %s", ctx.Method(), internalError, err)
@@ -179,7 +242,7 @@ func (c *controller) GetAll(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"data": usersOutput})
 	}
 
-	users, err := c.usecases.IndexAll()
+	users, err := c.usecases.IndexUsers()
 	if err != nil {
 		// Return an error response if the use case returns an error
 		c.logger.Error("%s -> %s: %s", ctx.Method(), internalError, err)
@@ -216,8 +279,8 @@ func (c *controller) GetAll(ctx *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param id path int true "User ID"
-// @Param user body User true "User object"
-// @Success 200 {object} User
+// @Param user body PutRequest true "PutRequest object"
+// @Success 200 {string} Updated
 // @Security ApiKeyAuth
 // @Security JwtTokenAuth
 // @Router /users/{id} [put]
@@ -260,6 +323,7 @@ func (c *controller) Put(ctx *fiber.Ctx) error {
 // @Summary Delete a user
 // @Description Delete a user with a given ID
 // @Param id path int true "User ID"
+// @Param user body DeleteRequest true "DeleteRequest object"
 // @Success 204
 // @Security ApiKeyAuth
 // @Security JwtTokenAuth

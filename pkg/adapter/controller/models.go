@@ -11,6 +11,12 @@ type User struct {
 // Users is a struct model for a slice of users interaction in controller layer
 type Users []User
 
+// AuthRequest is a struct model for auth post requests in controller layer
+type AuthRequest struct {
+	UserName string `json:"user" validate:"required"`
+	Password string `json:"password" validate:"required"`
+}
+
 // PostRequest is a struct model for post requests in controller layer
 type PostRequest struct {
 	Email    string `json:"email" validate:"required,email"`

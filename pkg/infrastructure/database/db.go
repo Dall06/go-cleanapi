@@ -30,22 +30,24 @@ var _ DB = (*dbConn)(nil)
 
 type dbConn struct {
 	logger utils.Logger
+	config config.Vars
 }
 
 // NewDBConn is a constructor for dbConn
-func NewDBConn(l utils.Logger) DB {
+func NewDBConn(l utils.Logger, v config.Vars) DB {
 	return &dbConn{
 		logger: l,
+		config: v,
 	}
 }
 
 func (c *dbConn) Open() (*sql.DB, error) {
-	if config.DBConnString == "" {
+	if c.config.DBConnString == "" {
 		c.logger.Warn("db connection failed: %v", emptyConnectionString)
 		return nil, errors.New(emptyConnectionString)
 	}
 
-	db, err := sql.Open(dbEngine, config.DBConnString)
+	db, err := sql.Open(dbEngine, c.config.DBConnString)
 	if err != nil {
 		c.logger.Error("db connection failed: %v", err)
 		return nil, err
@@ -55,7 +57,7 @@ func (c *dbConn) Open() (*sql.DB, error) {
 	db.SetMaxOpenConns(maxOpenConns)
 	db.SetMaxIdleConns(idleConns)
 
-	//c.logger.Info("db connection opened", nil)
+	c.logger.Info("db connection opened")
 	return db, nil
 }
 

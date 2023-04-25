@@ -8,8 +8,8 @@ import "github.com/google/uuid"
 
 type uuidMock struct{}
 
-// NewuuidMock is a contructor for a mock UUIDRepository
-func NewuuidMock() UUID {
+// NewUUIDMock is a contructor for a mock UUIDRepository
+func NewUUIDMock() UUID {
 	return &uuidMock{}
 }
 

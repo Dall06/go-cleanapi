@@ -28,31 +28,37 @@ type Server interface {
 }
 
 type server struct {
-	logger     utils.Logger
-	jwt        utils.JWT
-	uids       utils.UUID
-	validation validator.Validate
+	config      config.Vars
+	logger      utils.Logger
+	jwt         utils.JWT
+	uids        utils.UUID
+	validations utils.Validations
+	validation  validator.Validate
 }
 
 var _ Server = (*server)(nil)
 
 // NewServer is a constructor for server
 func NewServer(
+	vars config.Vars,
 	l utils.Logger,
 	j utils.JWT,
 	u utils.UUID,
+	vs utils.Validations,
 	v validator.Validate) Server {
 	return server{
-		logger:     l,
-		jwt:        j,
-		uids:       u,
-		validation: v,
+		config:      vars,
+		logger:      l,
+		jwt:         j,
+		uids:        u,
+		validations: vs,
+		validation:  v,
 	}
 }
 
 func (s server) Start() error {
 	// init database
-	dbConn := database.NewDBConn(s.logger)
+	dbConn := database.NewDBConn(s.logger, s.config)
 	conn, err := dbConn.Open()
 	if err != nil {
 		s.logger.Error("Failed to open database connection", err)
@@ -66,19 +72,19 @@ func (s server) Start() error {
 	// user
 	repo := repository.NewRepository(conn)
 	usecases := usecases.NewUseCases(repo, s.uids)
-	ctrl := controller.NewController(usecases, s.validation, s.logger, s.jwt, *ctrlCache)
+	ctrl := controller.NewController(usecases, s.validation, s.logger, s.jwt, s.validations, *ctrlCache)
 
 	// init server
 	cfg := fiber.Config{
 		Prefork:       false,
 		CaseSensitive: true,
 		ServerHeader:  "go-cleanapi",
-		AppName:       config.AppName,
+		AppName:       s.config.AppName,
 	}
 
 	app := fiber.New(cfg)
 	// init middleware
-	mw := middleware.NewMiddleware(s.jwt)
+	mw := middleware.NewMiddleware(s.config, s.jwt)
 	app.Use(mw.CORS())
 	app.Use(mw.Compress())
 	app.Use(mw.Helmet())
@@ -91,18 +97,18 @@ func (s server) Start() error {
 	app.Use(mw.Idempotency())
 
 	// generate routing
-	rts := routes.NewRoutes(app, ctrl)
+	rts := routes.NewRoutes(app, s.config, ctrl)
 	rts.Set()
 
 	// run gracefully
 	go func() {
-		if err := app.Listen(fmt.Sprintf(":%s", config.APIPort)); err != nil {
+		if err := app.Listen(fmt.Sprintf(":%s", s.config.APIPort)); err != nil {
 			s.logger.Error("Failed to listen on port", err)
 		}
 	}()
 
 	s.logger.Info("Running api server version %s in port %s, with base path %s",
-		config.APIVersion, config.APIPort, config.APIBasePath)
+		s.config.APIVersion, s.config.APIPort, s.config.APIBasePath)
 
 	// Gracefully shutdown
 	c := make(chan os.Signal, 1)

@@ -1,5 +1,35 @@
 basePath: /go-cleanapi/api/v1
 definitions:
+  controller.DeleteRequest:
+    properties:
+      password:
+        type: string
+    required:
+    - password
+    type: object
+  controller.PostRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  controller.PutRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+    required:
+    - password
+    type: object
   controller.User:
     properties:
       mail:
@@ -16,7 +46,7 @@ info:
   contact: {}
   description: Golang REST Api based on Uncle's Bob Clean Arch
   title: go-cleanapi
-  version: "1.0"
+  version: 1.0.0
 paths:
   /users:
     get:
@@ -39,19 +69,19 @@ paths:
       - application/json
       description: Create a new user
       parameters:
-      - description: User object
+      - description: PostRequest object
         in: body
         name: user
         required: true
         schema:
-          $ref: '#/definitions/controller.User'
+          $ref: '#/definitions/controller.PostRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/controller.User'
+            type: string
       security:
       - ApiKeyAuth: []
       summary: Create a user
@@ -64,6 +94,12 @@ paths:
         name: id
         required: true
         type: integer
+      - description: DeleteRequest object
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/controller.DeleteRequest'
       responses:
         "204":
           description: No Content
@@ -100,19 +136,19 @@ paths:
         name: id
         required: true
         type: integer
-      - description: User object
+      - description: PutRequest object
         in: body
         name: user
         required: true
         schema:
-          $ref: '#/definitions/controller.User'
+          $ref: '#/definitions/controller.PutRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.User'
+            type: string
       security:
       - ApiKeyAuth: []
       - JwtTokenAuth: []

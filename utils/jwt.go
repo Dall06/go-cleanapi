@@ -29,21 +29,19 @@ type JWT interface {
 	CreateUserJWT(uid string) (string, error)
 	CheckUserJwt(requestToken string) (bool, error)
 	CreateAPIJWT() (string, error)
-	CheckAPIJwt(requestToken string) (bool, error)
+	CheckAPIJWT(requestToken string) (bool, error)
 }
 
 var _ JWT = (*myJwt)(nil)
 
 type myJwt struct {
-	secret []byte
-	apiKey string
+	config config.Vars
 }
 
 // NewJWT returns a pointer to a JwtUtil struct.
-func NewJWT() JWT {
+func NewJWT(c config.Vars) JWT {
 	return &myJwt{
-		secret: config.JWTSecret,
-		apiKey: config.APIKey,
+		config: c,
 	}
 }
 
@@ -64,7 +62,8 @@ func (ju *myJwt) CreateUserJWT(id string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, userClaims)
 
 	// token -> string. Only server knows the secret.
-	signedToken, err := token.SignedString(ju.secret)
+	s := ju.config.JWTSecret
+	signedToken, err := token.SignedString(s)
 	if err != nil {
 		return "", fmt.Errorf("failed to sign token: %w", err)
 	}
@@ -80,7 +79,7 @@ func (ju *myJwt) CheckUserJwt(requestToken string) (bool, error) {
 	claims := &userClaims{}
 	token, err := jwt.ParseWithClaims(requestToken, claims, func(token *jwt.Token) (interface{}, error) {
 		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
-		return ju.secret, nil
+		return ju.config.JWTSecret, nil
 	})
 	if err != nil {
 		return false, fmt.Errorf("failed to parse token: %w", err)
@@ -94,9 +93,10 @@ func (ju *myJwt) CheckUserJwt(requestToken string) (bool, error) {
 }
 
 func (ju *myJwt) CreateAPIJWT() (string, error) {
-	apiKey := config.APIKey
+	apiKey := ju.config.APIKey
+
 	if apiKey == "" {
-		return "", errors.New("id cannot be empty")
+		return "", errors.New("api key cannot be empty")
 	}
 
 	sha := sha512.Sum512_256([]byte(apiKey))
@@ -115,7 +115,7 @@ func (ju *myJwt) CreateAPIJWT() (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, apiClaims)
 
 	// token -> string. Only server knows the secret.
-	signedToken, err := token.SignedString(ju.secret)
+	signedToken, err := token.SignedString(ju.config.JWTSecret)
 	if err != nil {
 		return "", fmt.Errorf("failed to sign token: %w", err)
 	}
@@ -123,8 +123,8 @@ func (ju *myJwt) CreateAPIJWT() (string, error) {
 	return signedToken, nil
 }
 
-func (ju *myJwt) CheckAPIJwt(requestToken string) (bool, error) {
-	apiKeyHash := config.APIKeyHash
+func (ju *myJwt) CheckAPIJWT(requestToken string) (bool, error) {
+	apiKeyHash := ju.config.APIKeyHash
 	if apiKeyHash == "" {
 		return false, errors.New("id cannot be empty")
 	}
@@ -137,7 +137,7 @@ func (ju *myJwt) CheckAPIJwt(requestToken string) (bool, error) {
 	token, err := jwt.ParseWithClaims(requestToken, claims, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
-		return ju.secret, nil
+		return ju.config.JWTSecret, nil
 	})
 	if err != nil {
 		return false, fmt.Errorf("failed to parse token: %w", err)
