@@ -10,6 +10,7 @@ on:
 
 jobs:
   test:
+    runs-on: ubuntu-latest
     steps:
       - 
         uses: actions/checkout@v3
@@ -22,7 +23,7 @@ jobs:
         run: go test ./... -coverprofile=coverage.out -coverpkg=./... && go tool cover -func=coverage.out
   dotenv:
     needs: [test]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       -
         name: Checkout
