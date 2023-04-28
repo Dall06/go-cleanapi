@@ -35,6 +35,11 @@ func TestIsEmail(test *testing.T) {
 			input:    "",
 			expected: false,
 		},
+		{
+			name:     "it should not check ok, is an phone",
+			input:    "+991234567890",
+			expected: false,
+		},
 	}
 
 	for _, tc := range successfulCases {
@@ -84,6 +89,12 @@ func TestIsPhone(test *testing.T) {
 		{
 			name:     "it should not check ok, is empty",
 			input:    "",
+			expected: false,
+		},
+
+		{
+			name:     "it should not check ok, is an email",
+			input:    "test@test.com",
 			expected: false,
 		},
 	}

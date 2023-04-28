@@ -7,6 +7,7 @@ import (
 	"dall06/go-cleanapi/pkg/internal/repository"
 	"dall06/go-cleanapi/pkg/internal/usecases"
 	"dall06/go-cleanapi/utils"
+	"database/sql"
 	"fmt"
 	"regexp"
 	"testing"
@@ -72,9 +73,19 @@ func TestAuthUser(test *testing.T) {
 	}
 
 	inputUserThree := &controller.User{
-		ID:       "im an id",
 		Email:    "test@test.com",
 		Phone:    "+991234567890",
+		Password: "12345pAsSWORd*",
+	}
+
+	inputUserSix := &controller.User{
+		Email:    "test2@test.com",
+		Password: "12345pAsSWORd*",
+	}
+
+	inputUserFive := &controller.User{
+		Email:    "",
+		Phone:    "+521234567890",
 		Password: "12345pAsSWORd*",
 	}
 
@@ -154,6 +165,34 @@ func TestAuthUser(test *testing.T) {
 			dbUser:   dbUserOne,
 			expected: expectedOne,
 		},
+		{
+			name:     "it should not login (mocked), no email found",
+			input:    inputUserThree,
+			rows:     rowsSetOne,
+			dbUser:   dbUserOne,
+			expected: expectedOne,
+		},
+		{
+			name:     "it should not login (mocked), no phone found",
+			input:    inputUserFive,
+			rows:     rowsSetOne,
+			dbUser:   dbUserOne,
+			expected: expectedOne,
+		},
+		{
+			name:     "it should not login (mocked), no email found",
+			input:    inputUserSix,
+			rows:     rowsSetOne,
+			dbUser:   dbUserOne,
+			expected: expectedOne,
+		},
+		{
+			name:     "it should not login (mocked), no phone found",
+			input:    inputUserThree,
+			rows:     rowsSetOne,
+			dbUser:   dbUserOne,
+			expected: expectedOne,
+		},
 	}
 
 	for _, tc := range successfulCases {
@@ -166,7 +205,6 @@ func TestAuthUser(test *testing.T) {
 			if err != nil {
 				test.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 			}
-			defer db.Close()
 			assert.NoError(t, err)
 
 			m.ExpectQuery(regexp.QuoteMeta(spLogin)).WithArgs(
@@ -183,6 +221,8 @@ func TestAuthUser(test *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expected, res)
+			m.ExpectClose().WillReturnError(sql.ErrConnDone) // expect a call to Close() but return an error to indicate that it was not expected
+
 		})
 	}
 
@@ -195,7 +235,6 @@ func TestAuthUser(test *testing.T) {
 			if err != nil {
 				test.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 			}
-			defer db.Close()
 			assert.NoError(t, err)
 
 			m.ExpectQuery(regexp.QuoteMeta(spLogin)).WithArgs(
@@ -212,6 +251,8 @@ func TestAuthUser(test *testing.T) {
 
 			assert.Error(t, err)
 			assert.NotEqual(t, tc.expected, res)
+			m.ExpectClose().WillReturnError(sql.ErrConnDone) // expect a call to Close() but return an error to indicate that it was not expected
+
 		})
 	}
 }
@@ -309,14 +350,13 @@ func TestRegisterUser(test *testing.T) {
 		test.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			db, mock, err := sqlmock.New()
+			db, m, err := sqlmock.New()
 			if err != nil {
 				test.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 			}
-			defer db.Close()
 			assert.NoError(t, err)
 
-			mock.ExpectExec(regexp.QuoteMeta(spCreate)).WithArgs(
+			m.ExpectExec(regexp.QuoteMeta(spCreate)).WithArgs(
 				sqlmock.AnyArg(),
 				&tc.dbUser.Email,
 				&tc.dbUser.Phone,
@@ -328,6 +368,8 @@ func TestRegisterUser(test *testing.T) {
 			uc := usecases.NewUseCases(r, uuid)
 			err = uc.RegisterUser(tc.input)
 			assert.NoError(t, err)
+			m.ExpectClose().WillReturnError(sql.ErrConnDone) // expect a call to Close() but return an error to indicate that it was not expected
+
 		})
 	}
 
@@ -337,14 +379,13 @@ func TestRegisterUser(test *testing.T) {
 		test.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			db, mock, err := sqlmock.New()
+			db, m, err := sqlmock.New()
 			if err != nil {
 				test.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 			}
-			defer db.Close()
 			assert.NoError(t, err)
 
-			mock.ExpectExec(regexp.QuoteMeta(spCreate)).WithArgs(
+			m.ExpectExec(regexp.QuoteMeta(spCreate)).WithArgs(
 				sqlmock.AnyArg(),
 				&tc.dbUser.Email,
 				&tc.dbUser.Phone,
@@ -356,6 +397,8 @@ func TestRegisterUser(test *testing.T) {
 			uc := usecases.NewUseCases(r, uuid)
 			err = uc.RegisterUser(tc.input)
 			assert.NotEmpty(t, err, "expected error, but got:", err)
+			m.ExpectClose().WillReturnError(sql.ErrConnDone) // expect a call to Close() but return an error to indicate that it was not expected
+
 		})
 	}
 }
@@ -465,7 +508,6 @@ func TestIndexUserByID(test *testing.T) {
 			if err != nil {
 				test.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 			}
-			defer db.Close()
 			assert.NoError(t, err)
 
 			m.ExpectQuery(regexp.QuoteMeta(spRead)).WithArgs(
@@ -478,6 +520,8 @@ func TestIndexUserByID(test *testing.T) {
 			res, err := uc.IndexUserByID(tc.input)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expected, res)
+			m.ExpectClose().WillReturnError(sql.ErrConnDone) // expect a call to Close() but return an error to indicate that it was not expected
+
 		})
 	}
 
@@ -490,7 +534,6 @@ func TestIndexUserByID(test *testing.T) {
 			if err != nil {
 				test.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 			}
-			defer db.Close()
 			assert.NoError(t, err)
 
 			m.ExpectQuery(regexp.QuoteMeta(spRead)).WithArgs(
@@ -503,6 +546,8 @@ func TestIndexUserByID(test *testing.T) {
 			res, err := uc.IndexUserByID(tc.input)
 			assert.Error(t, err)
 			assert.NotEqual(t, tc.expected, res)
+			m.ExpectClose().WillReturnError(sql.ErrConnDone) // expect a call to Close() but return an error to indicate that it was not expected
+
 		})
 	}
 }
@@ -589,7 +634,6 @@ func TestIndexUsers(test *testing.T) {
 			if err != nil {
 				test.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 			}
-			defer db.Close()
 			assert.NoError(t, err)
 
 			m.ExpectQuery(regexp.QuoteMeta(spReadAll)).WillReturnRows(tc.rows)
@@ -604,6 +648,8 @@ func TestIndexUsers(test *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expected, res)
+			m.ExpectClose().WillReturnError(sql.ErrConnDone) // expect a call to Close() but return an error to indicate that it was not expected
+
 		})
 	}
 
@@ -616,7 +662,6 @@ func TestIndexUsers(test *testing.T) {
 			if err != nil {
 				test.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 			}
-			defer db.Close()
 			assert.NoError(t, err)
 			m.ExpectQuery(regexp.QuoteMeta(spReadAll)).WillReturnRows(tc.rows)
 
@@ -626,6 +671,8 @@ func TestIndexUsers(test *testing.T) {
 			res, err := uc.IndexUsers()
 			assert.NoError(t, err)
 			assert.NotEqual(t, tc.expected, res)
+			m.ExpectClose().WillReturnError(sql.ErrConnDone) // expect a call to Close() but return an error to indicate that it was not expected
+
 		})
 	}
 }
@@ -749,14 +796,13 @@ func TestModifyUser(test *testing.T) {
 		test.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			db, mock, err := sqlmock.New()
+			db, m, err := sqlmock.New()
 			if err != nil {
 				test.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 			}
-			defer db.Close()
 			assert.NoError(t, err)
 
-			mock.ExpectExec(regexp.QuoteMeta(spUpdate)).WithArgs(
+			m.ExpectExec(regexp.QuoteMeta(spUpdate)).WithArgs(
 				&tc.dbUser.ID,
 				&tc.dbUser.Email,
 				&tc.dbUser.Phone,
@@ -768,6 +814,8 @@ func TestModifyUser(test *testing.T) {
 			uc := usecases.NewUseCases(r, uuid)
 			err = uc.ModifyUser(tc.input)
 			assert.NoError(t, err)
+			m.ExpectClose().WillReturnError(sql.ErrConnDone) // expect a call to Close() but return an error to indicate that it was not expected
+
 		})
 	}
 
@@ -777,14 +825,13 @@ func TestModifyUser(test *testing.T) {
 		test.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			db, mock, err := sqlmock.New()
+			db, m, err := sqlmock.New()
 			if err != nil {
 				test.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 			}
-			defer db.Close()
 			assert.NoError(t, err)
 
-			mock.ExpectExec(regexp.QuoteMeta(spUpdate)).WithArgs(
+			m.ExpectExec(regexp.QuoteMeta(spUpdate)).WithArgs(
 				&tc.dbUser.ID,
 				&tc.dbUser.Email,
 				&tc.dbUser.Phone,
@@ -796,6 +843,8 @@ func TestModifyUser(test *testing.T) {
 			uc := usecases.NewUseCases(r, uuid)
 			err = uc.ModifyUser(tc.input)
 			assert.Error(t, err)
+			m.ExpectClose().WillReturnError(sql.ErrConnDone) // expect a call to Close() but return an error to indicate that it was not expected
+
 		})
 	}
 }
@@ -881,14 +930,13 @@ func TestDelete(test *testing.T) {
 		test.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			db, mock, err := sqlmock.New()
+			db, m, err := sqlmock.New()
 			if err != nil {
 				test.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 			}
-			defer db.Close()
 			assert.NoError(t, err)
 
-			mock.ExpectExec(regexp.QuoteMeta(spDelete)).WithArgs(
+			m.ExpectExec(regexp.QuoteMeta(spDelete)).WithArgs(
 				&tc.dbUser.ID,
 				&tc.dbUser.Password,
 			).WillReturnResult(sqlmock.NewResult(0, 1))
@@ -898,6 +946,8 @@ func TestDelete(test *testing.T) {
 			uc := usecases.NewUseCases(r, uuid)
 			err = uc.DestroyUser(tc.input)
 			assert.NoError(t, err)
+			m.ExpectClose().WillReturnError(sql.ErrConnDone) // expect a call to Close() but return an error to indicate that it was not expected
+
 		})
 	}
 
@@ -907,14 +957,13 @@ func TestDelete(test *testing.T) {
 		test.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			db, mock, err := sqlmock.New()
+			db, m, err := sqlmock.New()
 			if err != nil {
 				test.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 			}
-			defer db.Close()
 			assert.NoError(t, err)
 
-			mock.ExpectExec(regexp.QuoteMeta(spDelete)).WithArgs(
+			m.ExpectExec(regexp.QuoteMeta(spDelete)).WithArgs(
 				&tc.dbUser.ID,
 				&tc.dbUser.Password,
 			).WillReturnResult(sqlmock.NewResult(0, 1))
@@ -924,6 +973,8 @@ func TestDelete(test *testing.T) {
 			uc := usecases.NewUseCases(r, uuid)
 			err = uc.DestroyUser(tc.input)
 			assert.Error(t, err)
+			m.ExpectClose().WillReturnError(sql.ErrConnDone) // expect a call to Close() but return an error to indicate that it was not expected
+
 		})
 	}
 }

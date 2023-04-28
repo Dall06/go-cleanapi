@@ -20,7 +20,7 @@ func TestDBConn(test *testing.T) {
 	varsEmptyDBConn := *vars
 	varsEmptyDBConn.DBConnString = ""
 
-	logger := utils.NewLogger(*vars)
+	logger := utils.NewLoggerMock()
 	err = logger.Initialize()
 	if err != nil {
 		test.Fatal("expected no error, but got:", err)

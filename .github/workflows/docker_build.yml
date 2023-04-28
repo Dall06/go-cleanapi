@@ -12,8 +12,8 @@ jobs:
   go-test:
     strategy:
       matrix:
-        go-version: [1.16.x, 1.17.x]
-        os: [ubuntu-20.04]
+        go-version: [1.20]
+        os: [ubuntu-22.04]
     runs-on: ${{ matrix.os }}
     steps:
     - name: Install Go
@@ -27,7 +27,7 @@ jobs:
 
   dotenv:
     needs: [go-test]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       -
         name: Checkout
@@ -58,7 +58,7 @@ jobs:
   
   docker:
     needs: [dotenv, go-test]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       -
         name: Checkout
@@ -74,13 +74,13 @@ jobs:
         run: cat .env
       -
         name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v2
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
       -
         name: Login to DockerHub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}

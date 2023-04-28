@@ -49,11 +49,13 @@ func TestFlags(t *testing.T) {
 
 			os.Args = append([]string{originalArgs[0]}, args...)
 
-			flags := tools.NewFlags().Flags()
+			flags := tools.NewFlags()
+			f, err := flags.GetFlags()
+			assert.NoError(t, err)
 
 			// Check the results
-			assert.Equal(t, tc.expected.Port, flags.Port)
-			assert.Equal(t, tc.expected.Version, flags.Version)
+			assert.Equal(t, tc.expected.Port, f.Port)
+			assert.Equal(t, tc.expected.Version, f.Version)
 
 			// Clean up
 			os.Args = originalArgs

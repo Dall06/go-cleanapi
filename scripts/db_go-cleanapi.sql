@@ -24,6 +24,21 @@ END$$
 DELIMITER ;
 
 DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_login_user`(
+    p_user_email VARCHAR(128),
+    p_user_phone VARCHAR(16),
+    p_user_password VARCHAR(64)
+)
+BEGIN
+	IF p_user_phone = '' THEN
+		SELECT * FROM `users` WHERE `p_user_email` = user_email AND `user_pass` = SHA2(in_u_pass, 512);
+	ELSEIF p_user_email = '' THEN
+		SELECT * FROM `users` WHERE `p_user_email` = user_email AND `user_pass` = SHA2(in_u_pass, 512);
+	END IF;
+END$$
+DELIMITER ;
+
+DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_read_user`(
 	p_id_user VARCHAR(64)
 )

@@ -110,13 +110,20 @@ func (m *middleware) JwtWare() fiber.Handler {
 		TokenLookup: "cookie:session_id",
 		Filter: func(c *fiber.Ctx) bool {
 			basePath := m.config.APIBasePath
-			welcomePath := fmt.Sprintf("%s/welcome/", basePath)
+
 			swaggerPath := fmt.Sprintf("%s/swagger/", basePath)
 
-			if c.Path() == welcomePath {
+			usersPath := fmt.Sprintf("%s/users", basePath)
+			authPath := fmt.Sprintf("%s/auth", usersPath)
+			signupPath := fmt.Sprintf("%s/signup", usersPath)
+
+			if c.Path() == swaggerPath {
 				return true
 			}
-			if c.Path() == swaggerPath {
+			if c.Path() == authPath {
+				return true
+			}
+			if c.Path() == signupPath {
 				return true
 			}
 			// Exclude all subroutes of /swagger
@@ -139,13 +146,20 @@ func (m *middleware) KeyAuth() fiber.Handler {
 		},
 		Filter: func(c *fiber.Ctx) bool {
 			basePath := m.config.APIBasePath
-			welcomePath := fmt.Sprintf("%s/welcome/", basePath)
+
 			swaggerPath := fmt.Sprintf("%s/swagger/", basePath)
 
-			if c.Path() == welcomePath {
+			usersPath := fmt.Sprintf("%s/users", basePath)
+			authPath := fmt.Sprintf("%s/auth", usersPath)
+			signupPath := fmt.Sprintf("%s/signup", usersPath)
+
+			if c.Path() == swaggerPath {
 				return true
 			}
-			if c.Path() == swaggerPath {
+			if c.Path() == authPath {
+				return true
+			}
+			if c.Path() == signupPath {
 				return true
 			}
 			// Exclude all subroutes of /swagger

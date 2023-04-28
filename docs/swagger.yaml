@@ -32,7 +32,7 @@ definitions:
     type: object
   controller.User:
     properties:
-      mail:
+      email:
         type: string
       password:
         type: string
@@ -153,15 +153,26 @@ paths:
       - ApiKeyAuth: []
       - JwtTokenAuth: []
       summary: Update a user
-  /welcome:
-    get:
-      description: Retrieve api token permissions
+  /users/auth:
+    post:
+      consumes:
+      - application/json
+      description: auth a as user with phone or mail
+      parameters:
+      - description: PostRequest object
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/controller.PostRequest'
       produces:
       - application/json
       responses:
-        "202":
-          description: Accepted
+        "200":
+          description: OK
           schema:
-            $ref: '#/definitions/controller.User'
-      summary: Get a api permissions
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Auth as user
 swagger: "2.0"

@@ -1,3 +1,6 @@
+//go:build !coverage
+// +build !coverage
+
 // Package server runs the server configuration and initialization
 //
 //go:generate swag init -g server.go

@@ -5,6 +5,7 @@ import (
 	"dall06/go-cleanapi/pkg/internal"
 	"dall06/go-cleanapi/pkg/internal/repository"
 	"dall06/go-cleanapi/utils"
+	"database/sql"
 	"fmt"
 
 	"github.com/mitchellh/mapstructure"
@@ -49,6 +50,10 @@ func (s *cases) AuthUser(req interface{}) (*internal.User, error) {
 
 	// add uuidGenerator to the user
 	res, err := s.repository.Login(user)
+	if err == sql.ErrNoRows {
+		empty := &internal.User{}
+		return empty, fmt.Errorf("failed to fetch user details: %v", "user not found")
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to auth user details: %v", err)
 	}
@@ -91,6 +96,10 @@ func (s *cases) IndexUserByID(req interface{}) (*internal.User, error) {
 	}
 
 	res, err := s.repository.Read(user)
+	if err == sql.ErrNoRows {
+		empty := &internal.User{}
+		return empty, nil
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch user details: %v", err)
 	}
@@ -103,7 +112,6 @@ func (s *cases) IndexUsers() (internal.Users, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch user details: %v", err)
 	}
-
 	return users, nil
 }
 
@@ -121,7 +129,7 @@ func (s *cases) ModifyUser(req interface{}) error {
 
 	err = s.repository.Update(user)
 	if err != nil {
-		return fmt.Errorf("failed to fetch user details: %v", err)
+		return fmt.Errorf("failed to update user: %v", err)
 	}
 
 	return nil

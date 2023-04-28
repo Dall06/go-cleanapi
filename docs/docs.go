@@ -78,6 +78,42 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/auth": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "auth a as user with phone or mail",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Auth as user",
+                "parameters": [
+                    {
+                        "description": "PostRequest object",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.PostRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/users/{id}": {
             "get": {
                 "security": [
@@ -190,23 +226,6 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/welcome": {
-            "get": {
-                "description": "Retrieve api token permissions",
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Get a api permissions",
-                "responses": {
-                    "202": {
-                        "description": "Accepted",
-                        "schema": {
-                            "$ref": "#/definitions/controller.User"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
@@ -259,7 +278,7 @@ const docTemplate = `{
         "controller.User": {
             "type": "object",
             "properties": {
-                "mail": {
+                "email": {
                     "type": "string"
                 },
                 "password": {

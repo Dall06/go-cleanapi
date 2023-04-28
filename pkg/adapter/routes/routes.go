@@ -43,9 +43,6 @@ func NewRoutes(app *fiber.App, vars config.Vars, ctrl controller.Controller) Rou
 func (routes *routes) Set() {
 	basePath := routes.config.APIBasePath
 
-	welcomePath := fmt.Sprintf("%s/welcome/", basePath)
-	routes.app.Get(welcomePath, routes.controller.Permision)
-
 	swaggerPath := fmt.Sprintf("%s/swagger/*", basePath)
 	routes.app.Get(swaggerPath, swagger.HandlerDefault)
 
@@ -54,9 +51,10 @@ func (routes *routes) Set() {
 	usersGroup.Get("/hello", func(c *fiber.Ctx) error {
 		return c.SendString("welcome to go-cleanapi user path ...")
 	})
-	usersGroup.Post("/", routes.controller.Post)
+	usersGroup.Post("/auth", routes.controller.Auth)
+	usersGroup.Post("/signup", routes.controller.Post)
 	usersGroup.Get("/:id", routes.controller.Get)
 	usersGroup.Get("/all", routes.controller.GetAll)
-	usersGroup.Put("/:id", routes.controller.Put)
-	usersGroup.Delete("/:id", routes.controller.Delete)
+	usersGroup.Put("/modify/:id", routes.controller.Put)
+	usersGroup.Delete("/delete/:id", routes.controller.Delete)
 }

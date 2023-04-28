@@ -14,7 +14,7 @@ type FlagValues struct {
 
 // Flags is an interface that extend tools
 type Flags interface {
-	Flags() FlagValues
+	GetFlags() (*FlagValues, error)
 }
 
 type flags struct {
@@ -30,7 +30,7 @@ func NewFlags() Flags {
 	}
 }
 
-func (f *flags) Flags() FlagValues {
+func (f *flags) GetFlags() (*FlagValues, error) {
 	// run app
 	var (
 		port    string
@@ -39,12 +39,14 @@ func (f *flags) Flags() FlagValues {
 	f.flagSet.StringVar(&port, "p", "8080", "port for http server")
 	f.flagSet.StringVar(&version, "v", "0.0.0", "version for http server")
 
-	f.flagSet.Parse(os.Args[1:])
+	if err := f.flagSet.Parse(os.Args[1:]); err != nil {
+		return nil, err
+	}
 
 	fv := &FlagValues{
 		Port:    port,
 		Version: version,
 	}
 
-	return *fv
+	return fv, nil
 }
