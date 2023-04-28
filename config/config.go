@@ -90,8 +90,8 @@ func (c *config) SetConfig() (*Vars, error) {
 
 	c.Vars.DBConnString = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", //"<user>:<password>@tcp(127.0.0.1:3306)/<dbname>"
 		os.Getenv(envUserDB), os.Getenv(envPasswordDB), os.Getenv(envHostDB), os.Getenv(envPortDB), os.Getenv(envNameDB))
-	c.Vars.JWTSecret = []byte(fmt.Sprint(os.Getenv("SECRET_JWT")))
-	c.Vars.Stage = strings.ToLower(os.Getenv("STAGE"))
+	c.Vars.JWTSecret = []byte(fmt.Sprint(os.Getenv(envSecretJWT)))
+	c.Vars.Stage = strings.ToLower(os.Getenv(envStage))
 
 	proyectName, err := c.loadName()
 	if err != nil {
