@@ -3,12 +3,12 @@ module dall06/go-cleanapi
 go 1.20
 
 require (
-	github.com/gofiber/helmet/v2 v2.2.25
-	github.com/gofiber/jwt/v3 v3.3.7
-	github.com/gofiber/keyauth/v2 v2.2.0
-	github.com/gofiber/swagger v0.1.10
+	github.com/gofiber/helmet/v2 v2.2.26
+	github.com/gofiber/jwt/v3 v3.3.9
+	github.com/gofiber/keyauth/v2 v2.2.1
+	github.com/gofiber/swagger v0.1.11
 	github.com/google/uuid v1.3.0
-	github.com/swaggo/swag v1.8.12
+	github.com/swaggo/swag v1.16.1
 )
 
 require (
@@ -53,7 +53,7 @@ require (
 	github.com/go-critic/go-critic v0.7.0 // indirect
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
-	github.com/go-openapi/spec v0.20.8 // indirect
+	github.com/go-openapi/spec v0.20.9 // indirect
 	github.com/go-openapi/swag v0.22.3 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
@@ -210,17 +210,17 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/go-playground/validator/v10 v10.12.0
-	github.com/go-sql-driver/mysql v1.7.0
-	github.com/gofiber/fiber/v2 v2.43.0 // direct
+	github.com/go-sql-driver/mysql v1.7.1
+	github.com/gofiber/fiber/v2 v2.44.0 // direct
 	github.com/gofiber/template v1.8.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/joho/godotenv v1.5.1
-	github.com/klauspost/compress v1.16.4 // indirect
+	github.com/klauspost/compress v1.16.5 // indirect
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/stretchr/testify v1.8.2
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.45.0 // indirect
+	github.com/valyala/fasthttp v1.46.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	go.uber.org/zap v1.24.0
 	golang.org/x/sys v0.7.0 // indirect
