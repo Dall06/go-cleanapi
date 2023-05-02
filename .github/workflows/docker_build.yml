@@ -27,7 +27,7 @@ jobs:
             echo NAME_DB="${{ secrets.NAME_DB }} "
             echo SECRET_JWT="${{ secrets.SECRET_JWT }}"
             echo STAGE="${{ secrets.STAGE }}"
-            echo COOKIE_ENCRYPTION="${{ secrets.COOKIE_ENC }}"
+            echo COOKIE_ENCRYPTION="${{ secrets.COOKIE_ENCRYPTION }}"
             echo API_KEY="${{ secrets.API_KEY }}"
           } > .env
       -
