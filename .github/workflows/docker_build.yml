@@ -20,15 +20,15 @@ jobs:
         shell: bash 
         run: |
           {
-            echo USER_DB="${{ secrets.SECRET_USER_DB }}"
-            echo PASSWORD_DB="${{ secrets.SECRET_PASSWORD_DB }}"
-            echo HOST_DB="${{ secrets.SECRET_HOST_DB }}"
-            echo PORT_DB="${{ secrets.SECRET_PORT_DB }}"
-            echo NAME_DB="${{ secrets.SECRET_NAME_DB }} "
+            echo USER_DB="${{ secrets.USER_DB }}"
+            echo PASSWORD_DB="${{ secrets.PASSWORD_DB }}"
+            echo HOST_DB="${{ secrets.HOST_DB }}"
+            echo PORT_DB="${{ secrets.PORT_DB }}"
+            echo NAME_DB="${{ secrets.NAME_DB }} "
             echo SECRET_JWT="${{ secrets.SECRET_JWT }}"
             echo STAGE="${{ secrets.STAGE }}"
-            echo COOKIE_ENCRYPTION="${{ secrets.SECRET_COOKIE_ENC }}"
-            echo API_KEY="${{ secrets.SECRET_API_KEY }}"
+            echo COOKIE_ENCRYPTION="${{ secrets.COOKIE_ENC }}"
+            echo API_KEY="${{ secrets.API_KEY }}"
           } > .env
       -
         name: Check the content
