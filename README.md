@@ -11,7 +11,7 @@ Principal unit tests can be found, as well as CI implementation with docker and 
 Use the go command [go](https://go.dev/) to run the project locally.
 
 ```bash
-go run main.go
+go run main.go -p <port_flag_value> -v -p <version_flag_value>
 ```
 
 ## Principal commands
